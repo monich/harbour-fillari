@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg viewBox="0 0 188 188" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <rect style="opacity:0" width="188" height="188"/>
+  <path style="fill:#999999" d="m 40,0 h 108 c 8.5,0 14,14 14,14 8.5,25.5 17.5,50.5 26,76 l 0,45 c 0,0 0,15 -15,15 H 15 C 0,150 0,135 0,135 V 90 C 9,64 15,40 26,14 26,15 32,0 40,0 Z"/>
+  <path style="fill:#ebebeb" d="m 21,134 c -5,0 -5,-5 -5,-5 V 95 c 0,-5 5,-5 5,-5 h 146 c 5,0 5,5 5,5 v 34 c 0,0 0,5 -5,5 z"/>
+  <circle style="fill:#999999" cy="112" cx="149" r="9"/>
+  <circle style="fill:#ae332e" cy="140" cx="94" r="48"/>
+  <g style="stroke:#ffffff;stroke-width:5;stroke-linecap:round">
+    <path d="m 85,150 18,-20"/>
+    <path d="m 85,130 18,20"/>
+  </g>
+</svg>

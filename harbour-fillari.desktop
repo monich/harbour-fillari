@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Name=Fillari
+X-Nemo-Application-Type=silica-qt5
+Icon=harbour-fillari
+Exec=harbour-fillari
+
+[X-HarbourBackup]
+BackupPathList = .config/harbour/fillari
+
+[X-Sailjail]
+#Sandboxing=Disabled
+Permissions=Internet
+OrganizationName=harbour
+ApplicationName=fillari
