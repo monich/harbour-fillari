@@ -4,9 +4,9 @@
 <context>
     <name></name>
     <message id="fillari-login_error-message">
-        <source>Sorry, cannot connect to the HSL service. Please try again later.</source>
+        <source>Sorry, cannot connect to the HSL service right now. Please try again later.</source>
         <extracomment>Full screen error message</extracomment>
-        <translation>Sorry, cannot connect to the HSL service. Please try again later.</translation>
+        <translation>Sorry, cannot connect to the HSL service right now. Please try again later.</translation>
     </message>
     <message id="fillari-login_error-retry_button">
         <source>Retry</source>
@@ -43,10 +43,10 @@
         <extracomment>Page title</extracomment>
         <translation>Ride history</translation>
     </message>
-    <message id="fillari-history-year-label">
-        <source>Year</source>
-        <extracomment>Combo box label</extracomment>
-        <translation>Year</translation>
+    <message id="fillari-history-season-label">
+        <source>Season</source>
+        <extracomment>Combo box label (season year)</extracomment>
+        <translation>Season</translation>
     </message>
     <message id="fillari-login-info_label">
         <source>Log in</source>
@@ -66,12 +66,12 @@
     <message id="fillari-main-status-loading_user_info">
         <source>Loading account information...</source>
         <extracomment>Main page status text</extracomment>
-        <translation>Loading account information...</translation>
+        <translation>Loading account information…</translation>
     </message>
     <message id="fillari-main-status-loading_history">
         <source>Loading history...</source>
         <extracomment>Main page status text</extracomment>
-        <translation>Loading history...</translation>
+        <translation>Loading history…</translation>
     </message>
     <message id="fillari-main-status-loading_network_error">
         <source>Network error</source>
@@ -79,9 +79,9 @@
         <translation>Network error</translation>
     </message>
     <message id="fillari-main-status-last_update_time">
-        <source>Last update: %1</source>
+        <source>Last update %1</source>
         <extracomment>Main page status text</extracomment>
-        <translation>Last update: %1</translation>
+        <translation>Last update %1</translation>
     </message>
     <message id="fillari-main-section-my_rides">
         <source>My rides %1</source>

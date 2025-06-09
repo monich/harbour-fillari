@@ -17,27 +17,11 @@ Item {
             bottom: retryButton.top
         }
 
-        InfoLabel {
-            id: infoLabel
-
-            anchors {
-                left: parent.left
-                leftMargin: isLandscape ? parent.width/2 : Theme.horizontalPageMargin
-                right: parent.right
-                rightMargin: Theme.horizontalPageMargin
-                verticalCenter: parent.verticalCenter
-                verticalCenterOffset: isLandscape ? 0 : Math.round(-parent.height/6)
-            }
-            //: Full screen error message
-            //% "Sorry, cannot connect to the HSL service. Please try again later."
-            text: qsTrId("fillari-login_error-message")
-        }
-
         Item {
             id: hslGraphicsContainer
 
             anchors {
-                bottom: parent.bottom
+                top: parent.top
                 left: parent.left
             }
 
@@ -48,6 +32,22 @@ Item {
                 source: "images/hsl.svg"
                 sourceSize.height: Math.min(Theme.itemSizeHuge, parent.height)
             }
+        }
+
+        InfoLabel {
+            id: infoLabel
+
+            anchors {
+                left: parent.left
+                leftMargin: isLandscape ? parent.width/2 : Theme.horizontalPageMargin
+                right: parent.right
+                rightMargin: Theme.horizontalPageMargin
+                verticalCenter: parent.verticalCenter
+                verticalCenterOffset: isLandscape ? 0 : height/2
+            }
+            //: Full screen error message
+            //% "Sorry, cannot connect to the HSL service right now. Please try again later."
+            text: qsTrId("fillari-login_error-message")
         }
     }
 
@@ -73,7 +73,7 @@ Item {
                 AnchorChanges {
                     target: hslGraphicsContainer
                     anchors {
-                        top: infoLabel.bottom
+                        bottom: infoLabel.top
                         right: content.right
                     }
                 }
@@ -86,7 +86,7 @@ Item {
                 AnchorChanges {
                     target: hslGraphicsContainer
                     anchors {
-                        top: content.top
+                        bottom: content.bottom
                         right: infoLabel.left
                     }
                 }

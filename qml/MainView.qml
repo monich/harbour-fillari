@@ -71,7 +71,7 @@ Item {
                 //% "Network error"
                 qsTrId("fillari-main-status-loading_network_error") :
                 //: Main page status text
-                //% "Last update: %1"
+                //% "Last update %1"
                 qsTrId("fillari-main-status-last_update_time").
                     arg(session.lastUpdate.toLocaleString(Qt.locale(),
                     "dd.MM.yyyy HH:mm"))

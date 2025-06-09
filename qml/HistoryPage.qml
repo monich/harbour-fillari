@@ -57,9 +57,9 @@ Page {
                 ComboBox {
                     id: yearSelector
 
-                    //: Combo box label
-                    //% "Year"
-                    label: qsTrId("fillari-history-year-label")
+                    //: Combo box label (season year)
+                    //% "Season"
+                    label: qsTrId("fillari-history-season-label")
                     menu: ContextMenu {
                         Repeater {
                             model: _years.length
