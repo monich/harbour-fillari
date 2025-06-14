@@ -71,24 +71,27 @@ Item {
             readonly property int _ystep: _maxValue ? histogramRow.height * _step / _maxValue : 0
 
             model:  _step ? Math.floor(_maxValue / _step) : 0
-            delegate: Component {
-                Column {
-                    x: _margin
-                    y: horizontalAxis.y - (model.modelData + 1) * grid._ystep - height
-                    width: thisItem.width - 2 * x
 
-                    Label {
-                        font.pixelSize: Theme.fontSizeSmall
-                        color: _lineColor
-                        text: Fillari.format((model.modelData + 1) * grid._step, _mode)
-                        opacity: parent.y > (header.y + header.height + Theme.paddingMedium) ? 1 : 0
-                    }
+            Column {
+                x: _margin
+                y: horizontalAxis.y - (model.modelData + 1) * grid._ystep - height
+                width: thisItem.width - 2 * x
+                visible: opacity > 0
+                opacity: busy ? 0 : 1
 
-                    Rectangle {
-                        width: parent.width
-                        height: _lineThickness
-                        color: _lineColor
-                    }
+                Behavior on opacity { FadeAnimation { } }
+
+                Label {
+                    font.pixelSize: Theme.fontSizeSmall
+                    color: _lineColor
+                    text: Fillari.format((model.modelData + 1) * grid._step, _mode)
+                    opacity: parent.y > (header.y + header.height + Theme.paddingMedium) ? 1 : 0
+                }
+
+                Rectangle {
+                    width: parent.width
+                    height: _lineThickness
+                    color: _lineColor
                 }
             }
         }
