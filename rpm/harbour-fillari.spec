@@ -1,7 +1,7 @@
 Name:           harbour-fillari
 
 Summary:        Helsinki city bike app
-Version:        1.0.1
+Version:        1.0.2
 Release:        1
 License:        BSD
 URL:            https://github.com/monich/harbour-fillari
