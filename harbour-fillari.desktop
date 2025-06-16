@@ -10,6 +10,6 @@ BackupPathList = .config/harbour/fillari
 
 [X-Sailjail]
 #Sandboxing=Disabled
-Permissions=Internet
+Permissions=Internet;NFC
 OrganizationName=harbour
 ApplicationName=fillari

@@ -47,7 +47,15 @@ Item {
             onActiveChanged: updateVisibility()
 
             MenuItem {
-                //: Label
+                //: Menu item
+                //% "Pick up"
+                text: qsTrId("fillari-menu-pick_up")
+                visible: session.nfcid1 !== "" && NfcSystem.valid && NfcSystem.present && NfcSystem.enabled && NfcSystem.version >= NfcSystem.Version_1_2_2
+                onClicked: pickUp.opacity = 1
+            }
+
+            MenuItem {
+                //: Menu item
                 //% "Refresh"
                 text: qsTrId("fillari-menu-refresh")
                 onClicked: session.refresh()
@@ -194,5 +202,16 @@ Item {
         }
 
         VerticalScrollDecorator {}
+    }
+
+    PickUpView {
+        id: pickUp
+
+        nfcid: session.nfcid1
+        anchors.fill: parent
+        visible: opacity > 0
+        opacity: 0
+        onDone: opacity = 0
+        Behavior on opacity { FadeAnimation { } }
     }
 }

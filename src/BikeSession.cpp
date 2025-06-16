@@ -69,8 +69,8 @@
     s(FirstNames,firstNames) \
     s(LastName,lastName) \
     s(FullName,fullName) \
-    s(IdentType,identType) \
-    s(IdentData,identData) \
+    s(HslCard,hslCard) \
+    s(Nfcid1,nfcid1) \
     s(History,history) \
     s(RideInProgress,rideInProgress) \
     s(RideDuration,rideDuration) \
@@ -135,8 +135,7 @@ public:
     void setState(State);
     void setFirstName(QString);
     void setLastName(QString);
-    void setIdentType(QString);
-    void setIdentData(QString);
+    void setIdent(QString, QString);
     bool rideInProgress() const;
     int rideDuration() const;
     void start();
@@ -180,8 +179,8 @@ public:
     QDateTime iLastNetworkError;
     QString iFirstNames;
     QString iLastName;
-    QString iIdentType;
-    QString iIdentData;
+    QString iHslCard;
+    QString iNfcid1;
     QJsonArray iHistory;
     QTimer* iRideDurationTimer;
     QList<int> iYears;
@@ -366,24 +365,30 @@ BikeSession::Private::setLastName(
 }
 
 void
-BikeSession::Private::setIdentType(
-    QString aIdentType)
-{
-    if (iIdentType != aIdentType) {
-        iIdentType = aIdentType;
-        HDEBUG(iIdentType);
-        queueSignal(SignalIdentTypeChanged);
-    }
-}
-
-void
-BikeSession::Private::setIdentData(
+BikeSession::Private::setIdent(
+    QString aIdentType,
     QString aIdentData)
 {
-    if (iIdentData != aIdentData) {
-        iIdentData = aIdentData;
-        HDEBUG(iIdentData);
-        queueSignal(SignalIdentDataChanged);
+    QString hslCard, nfcid1;
+
+    if (aIdentType == QStringLiteral("card") &&
+        aIdentData.length() == 16 &&
+        aIdentData.at(0) == '0' &&
+        aIdentData.at(1) == '0') {
+        hslCard = aIdentData;
+        nfcid1 = hslCard.right(14).toLower();
+    }
+
+    if (iHslCard != hslCard) {
+        iHslCard = hslCard;
+        HDEBUG("card" << hslCard);
+        queueSignal(SignalHslCardChanged);
+    }
+
+    if (iNfcid1 != nfcid1) {
+        iNfcid1 = nfcid1;
+        HDEBUG("NFCID1" << qPrintable(nfcid1));
+        queueSignal(SignalNfcid1Changed);
     }
 }
 
@@ -713,8 +718,8 @@ void
 BikeSession::Private::onServiceQueryFinished(
     const QJsonObject& aServiceInfo)
 {
-    setIdentType(aServiceInfo.value(QStringLiteral("ident_type")).toString());
-    setIdentData(aServiceInfo.value(QStringLiteral("ident_data")).toString());
+    setIdent(aServiceInfo.value(QStringLiteral("ident_type")).toString(),
+        aServiceInfo.value(QStringLiteral("ident_data")).toString());
     refreshHistory();
     updated();
     emitQueuedSignals();
@@ -879,15 +884,15 @@ BikeSession::fullName() const
 }
 
 QString
-BikeSession::identType() const
+BikeSession::hslCard() const
 {
-    return iPrivate->iIdentType;
+    return iPrivate->iHslCard;
 }
 
 QString
-BikeSession::identData() const
+BikeSession::nfcid1() const
 {
-    return iPrivate->iIdentData;
+    return iPrivate->iNfcid1;
 }
 
 QJsonArray

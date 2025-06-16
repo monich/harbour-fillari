@@ -59,8 +59,8 @@ class BikeSession:
     Q_PROPERTY(QString firstNames READ firstNames NOTIFY firstNamesChanged)
     Q_PROPERTY(QString lastName READ lastName NOTIFY lastNameChanged)
     Q_PROPERTY(QString fullName READ fullName NOTIFY fullNameChanged)
-    Q_PROPERTY(QString identType READ identType NOTIFY identTypeChanged)
-    Q_PROPERTY(QString identData READ identData NOTIFY identDataChanged)
+    Q_PROPERTY(QString hslCard READ hslCard NOTIFY hslCardChanged)
+    Q_PROPERTY(QString nfcid1 READ nfcid1 NOTIFY nfcid1Changed)
     Q_PROPERTY(QJsonArray history READ history NOTIFY historyChanged)
     Q_PROPERTY(bool rideInProgress READ rideInProgress NOTIFY rideInProgressChanged)
     Q_PROPERTY(int rideDuration READ rideDuration NOTIFY rideDurationChanged)
@@ -97,8 +97,8 @@ public:
     QString firstNames() const;
     QString lastName() const;
     QString fullName() const;
-    QString identType() const;
-    QString identData() const;
+    QString hslCard() const;
+    QString nfcid1() const;
     QJsonArray history() const;
     bool rideInProgress() const;
     int rideDuration() const;
@@ -121,8 +121,8 @@ Q_SIGNALS:
     void firstNamesChanged();
     void lastNameChanged();
     void fullNameChanged();
-    void identTypeChanged();
-    void identDataChanged();
+    void hslCardChanged();
+    void nfcid1Changed();
     void historyChanged();
     void rideInProgressChanged();
     void rideDurationChanged();

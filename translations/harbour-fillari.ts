@@ -13,9 +13,14 @@
         <extracomment>Button for retrying to connect to the service</extracomment>
         <translation>Retry</translation>
     </message>
+    <message id="fillari-menu-pick_up">
+        <source>Pick up</source>
+        <extracomment>Menu item</extracomment>
+        <translation>Pick up</translation>
+    </message>
     <message id="fillari-menu-refresh">
         <source>Refresh</source>
-        <extracomment>Label</extracomment>
+        <extracomment>Menu item</extracomment>
         <translation>Refresh</translation>
     </message>
     <message id="fillari-history-distance_button">
@@ -132,6 +137,16 @@
         <source>%1 h</source>
         <extracomment>Duration, hours(shortened)</extracomment>
         <translation>%1 h</translation>
+    </message>
+    <message id="fillari-pick_up-info_label">
+        <source>Show your phone to the card reader instead of your HSL card.</source>
+        <extracomment>Info label</extracomment>
+        <translation>Show your phone to the card reader instead of your HSL card.</translation>
+    </message>
+    <message id="fillari-pick_up-button-done">
+        <source>Done</source>
+        <extracomment>Button label</extracomment>
+        <translation>Done</translation>
     </message>
 </context>
 </TS>

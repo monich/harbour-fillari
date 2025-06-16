@@ -43,6 +43,12 @@
 #include "BikeUser.h"
 #include "Fillari.h"
 
+#include "NfcAdapter.h"
+#include "NfcMode.h"
+#include "NfcParam.h"
+#include "NfcSystem.h"
+#include "NfcTech.h"
+
 #include <sailfishapp.h>
 
 #include <QtCore/QCoreApplication>
@@ -72,7 +78,12 @@ registerTypes(
     REGISTER_TYPE(uri, v1, v2, BikeHistoryStats);
     REGISTER_TYPE(uri, v1, v2, BikeSession);
     REGISTER_TYPE(uri, v1, v2, BikeUser);
+    REGISTER_TYPE(uri, v1, v2, NfcMode);
+    REGISTER_TYPE(uri, v1, v2, NfcParam);
+    REGISTER_TYPE(uri, v1, v2, NfcTech);
     REGISTER_SINGLETON_TYPE(uri, v1, v2, Fillari);
+    REGISTER_SINGLETON_TYPE(uri, v1, v2, NfcAdapter);
+    REGISTER_SINGLETON_TYPE(uri, v1, v2, NfcSystem);
     qRegisterMetaType<BikeHistoryStats::Mode>("BikeHistoryStats::Mode");
 }
 

@@ -3,9 +3,10 @@ NAME = fillari
 
 TARGET = $${PREFIX}-$${NAME}
 CONFIG += sailfishapp link_pkgconfig
-PKGCONFIG += sailfishapp mlite5
+PKGCONFIG += sailfishapp mlite5 glib-2.0 gobject-2.0 gio-unix-2.0
 QT += network qml quick dbus
 
+DEFINES += NFCDC_NEED_PEER_SERVICE=0
 QMAKE_CXXFLAGS += -Wno-unused-parameter
 QMAKE_CFLAGS += -Wno-unused-parameter
 
@@ -28,6 +29,114 @@ OTHER_FILES += \
 # Directories
 
 HARBOUR_LIB_DIR = $${_PRO_FILE_PWD_}/harbour-lib
+LIBGLIBUTIL_DIR = $${_PRO_FILE_PWD_}/libglibutil
+LIBGNFCDC_DIR = $${_PRO_FILE_PWD_}/libgnfcdc
+LIBQNFCDC_DIR = $${_PRO_FILE_PWD_}/libqnfcdc
+
+# libglibutil
+
+LIBGLIBUTIL_SRC = $${LIBGLIBUTIL_DIR}/src
+LIBGLIBUTIL_INCLUDE = $${LIBGLIBUTIL_DIR}/include
+
+INCLUDEPATH += \
+    $${LIBGLIBUTIL_INCLUDE}
+
+HEADERS += \
+    $${LIBGLIBUTIL_INCLUDE}/*.h
+
+SOURCES += \
+    $${LIBGLIBUTIL_SRC}/gutil_log.c \
+    $${LIBGLIBUTIL_SRC}/gutil_misc.c \
+    $${LIBGLIBUTIL_SRC}/gutil_strv.c
+
+# libgnfcdc
+
+LIBGNFCDC_INCLUDE = $${LIBGNFCDC_DIR}/include
+LIBGNFCDC_SRC = $${LIBGNFCDC_DIR}/src
+LIBGNFCDC_SPEC = $${LIBGNFCDC_DIR}/spec
+
+INCLUDEPATH += \
+    $${LIBGNFCDC_INCLUDE}
+
+HEADERS += \
+    $${LIBGNFCDC_INCLUDE}/*.h \
+    $${LIBGNFCDC_SRC}/*.h
+
+SOURCES += \
+    $${LIBGNFCDC_SRC}/nfcdc_adapter.c \
+    $${LIBGNFCDC_SRC}/nfcdc_base.c \
+    $${LIBGNFCDC_SRC}/nfcdc_daemon.c \
+    $${LIBGNFCDC_SRC}/nfcdc_default_adapter.c \
+    $${LIBGNFCDC_SRC}/nfcdc_error.c \
+    $${LIBGNFCDC_SRC}/nfcdc_isodep.c \
+    $${LIBGNFCDC_SRC}/nfcdc_log.c \
+    $${LIBGNFCDC_SRC}/nfcdc_tag.c \
+    $${LIBGNFCDC_SRC}/nfcdc_util.c
+
+OTHER_FILES += \
+    $${LIBGNFCDC_SPEC}/*.xml
+
+defineTest(generateStub) {
+    xml = $${LIBGNFCDC_SPEC}/org.sailfishos.nfc.$${1}.xml
+    cmd = gdbus-codegen --generate-c-code org.sailfishos.nfc.$${1} $${xml}
+
+    gen_h = org.sailfishos.nfc.$${1}.h
+    gen_c = org.sailfishos.nfc.$${1}.c
+    target_h = org_sailfishos_nfc_$${1}_h
+    target_c = org_sailfishos_nfc_$${1}_c
+
+    $${target_h}.target = $${gen_h}
+    $${target_h}.depends = $${xml}
+    $${target_h}.commands = $${cmd}
+    export($${target_h}.target)
+    export($${target_h}.depends)
+    export($${target_h}.commands)
+
+    GENERATED_HEADERS += $${gen_h}
+    PRE_TARGETDEPS += $${gen_h}
+    QMAKE_EXTRA_TARGETS += $${target_h}
+
+    $${target_c}.target = $${gen_c}
+    $${target_c}.depends = $${gen_h}
+    export($${target_c}.target)
+    export($${target_c}.depends)
+
+    GENERATED_SOURCES += $${gen_c}
+    QMAKE_EXTRA_TARGETS += $${target_c}
+    PRE_TARGETDEPS += $${gen_c}
+
+    export(QMAKE_EXTRA_TARGETS)
+    export(GENERATED_SOURCES)
+    export(PRE_TARGETDEPS)
+}
+
+generateStub(Adapter)
+generateStub(Daemon)
+generateStub(IsoDep)
+generateStub(Settings)
+generateStub(Tag)
+
+# libqnfcdc
+
+LIBQNFCDC_INCLUDE = $${LIBQNFCDC_DIR}/include
+LIBQNFCDC_SRC = $${LIBQNFCDC_DIR}/src
+
+INCLUDEPATH += \
+    $${LIBQNFCDC_INCLUDE}
+
+HEADERS += \
+    $${LIBQNFCDC_INCLUDE}/NfcAdapter.h \
+    $${LIBQNFCDC_INCLUDE}/NfcMode.h \
+    $${LIBQNFCDC_INCLUDE}/NfcParam.h \
+    $${LIBQNFCDC_INCLUDE}/NfcSystem.h \
+    $${LIBQNFCDC_INCLUDE}/NfcTech.h
+
+SOURCES += \
+    $${LIBQNFCDC_SRC}/NfcAdapter.cpp \
+    $${LIBQNFCDC_SRC}/NfcMode.cpp \
+    $${LIBQNFCDC_SRC}/NfcParam.cpp \
+    $${LIBQNFCDC_SRC}/NfcSystem.cpp \
+    $${LIBQNFCDC_SRC}/NfcTech.cpp
 
 # harbour-lib
 
