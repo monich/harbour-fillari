@@ -9,6 +9,8 @@ Item {
     property bool isLandscape
     property var session
 
+    property var _remorsePopup
+    readonly property bool _remorsePopupVisible: _remorsePopup ? _remorsePopup.visible : false
     readonly property color _hslYellow: "#fcb919"
     readonly property bool _busy: session.sessionState === BikeSession.UserInfoQuery ||
                                   session.sessionState === BikeSession.HistoryQuery
@@ -28,13 +30,22 @@ Item {
         maxCount: 3
     }
 
+    Component {
+        id: remorsePopupComponent
+
+        RemorsePopup { }
+    }
+
     SilicaFlickable {
         width: parent.width
         contentHeight: header.height + content.height
         anchors.fill: parent
 
         PullDownMenu {
-            readonly property bool shouldBeVisible: !thisView._busy
+            id: pulleyMenu
+
+            property bool logoutRequested
+            readonly property bool shouldBeVisible: !thisView._busy && !_remorsePopupVisible
 
             function updateVisibility() {
                 if (shouldBeVisible || !active) {
@@ -44,13 +55,26 @@ Item {
 
             Component.onCompleted: updateVisibility()
             onShouldBeVisibleChanged: updateVisibility()
-            onActiveChanged: updateVisibility()
+            onActiveChanged: {
+                updateVisibility()
+                // It doesn't look nice when remorse popup appears before the menu
+                // flick animation has finished
+                if (logoutRequested) {
+                    logoutRequested = false
+                    if (!_remorsePopup) _remorsePopup = remorsePopupComponent.createObject(thisView)
+                    //: Remorse popup text
+                    //% "Logging out"
+                    _remorsePopup.execute(qsTrId("fillari-remorse-logout"),
+                        function() { session.logOut() })
+                }
+            }
 
             MenuItem {
                 //: Menu item
                 //% "Log out"
                 text: qsTrId("fillari-menu-log_out")
-                onClicked: session.logOut()
+                // The remorse popup will appear when the menu has flicked back
+                onClicked: pulleyMenu.logoutRequested = true
             }
 
             MenuItem {

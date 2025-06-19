@@ -9,6 +9,11 @@ Page {
 
     Connections {
         target: session
+        onSessionStateChanged: {
+            if (session.sessionState === BikeSession.Unauthorized) {
+                pageStack.pop(thisPage, PageStackAction.Immediate)
+            }
+        }
         onHttpErrorChanged: {
             if (session.httpError) {
                 httpErrorPanel.opacity = 1

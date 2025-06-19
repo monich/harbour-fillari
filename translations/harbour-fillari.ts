@@ -28,6 +28,11 @@
         <extracomment>Menu item</extracomment>
         <translation>Refresh</translation>
     </message>
+    <message id="fillari-remorse-logout">
+        <source>Logging out</source>
+        <extracomment>Remorse popup text</extracomment>
+        <translation>Logging out</translation>
+    </message>
     <message id="fillari-history-distance_button">
         <source>Kilometers</source>
         <extracomment>Button label</extracomment>
