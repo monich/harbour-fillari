@@ -13,6 +13,11 @@
         <extracomment>Button for retrying to connect to the service</extracomment>
         <translation type="unfinished">Yritä uudelleen</translation>
     </message>
+    <message id="fillari-menu-log_out">
+        <source>Log out</source>
+        <extracomment>Menu item</extracomment>
+        <translation>Kirjaudu ulos</translation>
+    </message>
     <message id="fillari-menu-pick_up">
         <source>Pick up</source>
         <extracomment>Menu item</extracomment>

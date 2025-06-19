@@ -41,6 +41,7 @@
 #include "BikeHistoryModel.h"
 #include "BikeHistoryQuery.h"
 #include "BikeLogin.h"
+#include "BikeLogout.h"
 #include "BikeObjectQuery.h"
 
 #include <QtCore/QDate>
@@ -140,6 +141,7 @@ public:
     int rideDuration() const;
     void start();
     void signIn(QString, QString);
+    void logOut();
     void refreshHistory();
     void updated();
 
@@ -162,6 +164,7 @@ private Q_SLOTS:
     void onLoginFailure(QString);
     void onLoginNetworkError();
     void onLoginHttpError(int);
+    void onLogoutDone();
     void onNetworkError();
     void onHttpError(int);
 
@@ -275,6 +278,7 @@ BikeSession::Private::sessionName(
     case HistoryQuery: return "HistoryQuery";
     case Unauthorized: return "Unauthorized";
     case LoggingIn: return "LoggingIn";
+    case LoggingOut: return "LoggingOut";
     case LoginFailed: return "LoginFailed";
     case LoginNetworkError: return "LoginNetworkError";
     case NetworkError: return "NetworkError";
@@ -472,6 +476,19 @@ BikeSession::Private::signIn(
     startRequest(login, LoggingIn,
         SLOT(onLoginHttpError(int)),
         SLOT(onLoginNetworkError()));
+}
+
+void
+BikeSession::Private::logOut()
+{
+    HDEBUG("Logging out");
+
+    BikeLogout* logout = new BikeLogout(&iNetworkAccessManager);
+
+    connect(logout, SIGNAL(finished()), SLOT(onLogoutDone()));
+    iRequest.reset(logout);
+    setState(LoggingOut);
+    setHttpStatus(0);
 }
 
 void
@@ -786,6 +803,21 @@ BikeSession::Private::onLoginHttpError(
 }
 
 void
+BikeSession::Private::onLogoutDone()
+{
+    setState(Unauthorized);
+    if (!iDataDir.isEmpty()) {
+        QDir dir(iDataDir);
+
+        if (dir.remove(COOKIES_FILE)) {
+            HDEBUG("Removed" << qPrintable(dir.filePath(COOKIES_FILE)));
+        }
+
+        start();
+    }
+}
+
+void
 BikeSession::Private::onNetworkError()
 {
     onHttpError(0);
@@ -944,6 +976,12 @@ BikeSession::signIn(
 {
     iPrivate->signIn(aLogin, aPassword);
     iPrivate->emitQueuedSignals();
+}
+
+void
+BikeSession::logOut()
+{
+    iPrivate->logOut();
 }
 
 void

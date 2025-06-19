@@ -170,6 +170,7 @@ HEADERS += \
     src/BikeHistoryQuery.h \
     src/BikeHistoryStats.h \
     src/BikeLogin.h \
+    src/BikeLogout.h \
     src/BikeObjectQuery.h \
     src/BikeRequest.h \
     src/BikeSession.h \
@@ -181,6 +182,7 @@ SOURCES += \
     src/BikeHistoryQuery.cpp \
     src/BikeHistoryStats.cpp \
     src/BikeLogin.cpp \
+    src/BikeLogout.cpp \
     src/BikeObjectQuery.cpp \
     src/BikeRequest.cpp \
     src/BikeSession.cpp \

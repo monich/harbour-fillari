@@ -48,6 +48,13 @@ Item {
 
             MenuItem {
                 //: Menu item
+                //% "Log out"
+                text: qsTrId("fillari-menu-log_out")
+                onClicked: session.logOut()
+            }
+
+            MenuItem {
+                //: Menu item
                 //% "Pick up"
                 text: qsTrId("fillari-menu-pick_up")
                 visible: session.nfcid1 !== "" && NfcSystem.valid && NfcSystem.present && NfcSystem.enabled && NfcSystem.version >= NfcSystem.Version_1_2_2

@@ -77,6 +77,7 @@ public:
         HistoryQuery,
         Unauthorized,
         LoggingIn,
+        LoggingOut,
         LoginFailed,
         LoginNetworkError,
         NetworkError,
@@ -107,6 +108,7 @@ public:
     int thisYear() const;
 
     Q_INVOKABLE void signIn(QString, QString);
+    Q_INVOKABLE void logOut();
     Q_INVOKABLE void restart();
     Q_INVOKABLE void refresh();
 

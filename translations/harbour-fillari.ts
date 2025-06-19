@@ -13,6 +13,11 @@
         <extracomment>Button for retrying to connect to the service</extracomment>
         <translation>Retry</translation>
     </message>
+    <message id="fillari-menu-log_out">
+        <source>Log out</source>
+        <extracomment>Menu item</extracomment>
+        <translation>Log out</translation>
+    </message>
     <message id="fillari-menu-pick_up">
         <source>Pick up</source>
         <extracomment>Menu item</extracomment>

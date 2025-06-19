@@ -24,7 +24,8 @@ Page {
             anchors.fill: parent
             active: opacity > 0
             opacity: (session.sessionState === BikeSession.LoginCheck ||
-                      session.sessionState === BikeSession.LoggingIn) ? 1 : 0
+                      session.sessionState === BikeSession.LoggingIn ||
+                      session.sessionState === BikeSession.LoggingOut) ? 1 : 0
             sourceComponent: Component { WaitView { } }
             Behavior on opacity { FadeAnimation { } }
         }
