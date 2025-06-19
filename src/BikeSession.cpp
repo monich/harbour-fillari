@@ -805,17 +805,46 @@ BikeSession::Private::onLoginHttpError(
 void
 BikeSession::Private::onLogoutDone()
 {
-    setState(Unauthorized);
+    const bool rideWasInProgress = rideInProgress();
+
+    iRequest.reset();
+    iNetworkAccessManager.setCookieJar(new CookieJar(&iNetworkAccessManager));
+
     if (!iDataDir.isEmpty()) {
         QDir dir(iDataDir);
 
         if (dir.remove(COOKIES_FILE)) {
             HDEBUG("Removed" << qPrintable(dir.filePath(COOKIES_FILE)));
         }
-
-        iNetworkAccessManager.setCookieJar(new CookieJar(&iNetworkAccessManager));
-        start();
     }
+
+    if (!iHistory.isEmpty()) {
+        iHistory = QJsonArray();
+        queueSignal(SignalHistoryChanged);
+    }
+
+    if (!iYears.isEmpty()) {
+        iYears.clear();
+        queueSignal(SignalLastYearChanged);
+        queueSignal(SignalYearsChanged);
+    }
+
+    if (rideWasInProgress) {
+        queueSignal(SignalRideInProgressChanged);
+        queueSignal(SignalRideDurationChanged);
+        delete iRideDurationTimer;
+        iRideDurationTimer = Q_NULLPTR;
+    }
+
+    setHttpStatus(BikeRequest::OK);
+    setErrorText(QString());
+    setFirstName(QString());
+    setLastName(QString());
+    setIdent(QString(), QString());
+    setState(Unauthorized);
+
+    start();
+    emitQueuedSignals();
 }
 
 void
@@ -983,6 +1012,7 @@ void
 BikeSession::logOut()
 {
     iPrivate->logOut();
+    iPrivate->emitQueuedSignals();
 }
 
 void
