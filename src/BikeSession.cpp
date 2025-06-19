@@ -813,6 +813,7 @@ BikeSession::Private::onLogoutDone()
             HDEBUG("Removed" << qPrintable(dir.filePath(COOKIES_FILE)));
         }
 
+        iNetworkAccessManager.setCookieJar(new CookieJar(&iNetworkAccessManager));
         start();
     }
 }
