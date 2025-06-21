@@ -2,6 +2,8 @@ import QtQuick 2.0
 import Sailfish.Silica 1.0
 
 Item {
+    id: thisItem
+
     property alias text: label.text
 
     readonly property real _sqrt2: Math.sqrt(2)
@@ -12,86 +14,92 @@ Item {
     width: label.width + 2 * Theme.paddingMedium
     height: label.height + 2 * Theme.paddingMedium
 
-    Rectangle {
-        id: contents
+    ShaderEffectSource {
+        anchors.fill: parent
+        sourceItem: Item {
+            width: thisItem.width
+            height: thisItem.height
 
-        y: Theme.paddingSmall
-        width: parent.width
-        height: parent.height - Theme.paddingLarge
-        color: _backgroundColor
-        radius: Theme.paddingSmall
-        border {
-            width: _lineThickness
-            color: _foregroundColor
-        }
-    }
+            Rectangle {
+                y: Theme.paddingSmall
+                width: parent.width
+                height: parent.height - Theme.paddingLarge
+                color: _backgroundColor
+                radius: Theme.paddingSmall
+                border {
+                    width: _lineThickness
+                    color: _foregroundColor
+                }
 
-    Item {
-        id : triangle
+                Item {
+                    id : triangle
 
-        anchors {
-            horizontalCenter: parent.horizontalCenter
-            top: contents.bottom
-            topMargin: - _lineThickness
-        }
+                    anchors {
+                        horizontalCenter: parent.horizontalCenter
+                        top: parent.bottom
+                        topMargin: - _lineThickness
+                    }
 
-        width: Theme.paddingLarge
-        height: width
-        clip: true
+                    width: Theme.paddingLarge
+                    height: width
+                    clip: true
 
-        Rectangle {
-            width: parent.width / _sqrt2
-            height: width
-            color: _backgroundColor
-            border {
-                width: _lineThickness
-                color: _foregroundColor
+                    Rectangle {
+                        width: parent.width / _sqrt2
+                        height: width
+                        color: _backgroundColor
+                        border {
+                            width: _lineThickness
+                            color: _foregroundColor
+                        }
+                        transform: [
+                            Rotation {
+                                axis.z: 1
+                                angle: 45
+                            },
+                            Translate {
+                                x: triangle.width / 2
+                                y: - triangle.height /2
+                            }
+                        ]
+                        antialiasing: true
+                    }
+                }
+
+                Item {
+                    anchors.fill: triangle
+
+                    // Repair clipping/antialiasing artifacts
+                    Rectangle {
+                        x: _lineThickness
+                        y: _lineThickness
+                        width: (parent.width - 2 * _lineThickness) / _sqrt2
+                        height: width
+                        color: _backgroundColor
+                        transform: [
+                            Rotation {
+                                axis.z: 1
+                                angle: 45
+                            },
+                            Translate {
+                                x: triangle.width / 2
+                                y: - triangle.height /2
+                            }
+                        ]
+                    }
+                }
+
+                Label {
+                    id: label
+
+                    color: _foregroundColor
+                    anchors.centerIn: parent
+                    font {
+                        bold: true
+                        pixelSize: Theme.fontSizeSmall
+                    }
+                }
             }
-            transform: [
-                Rotation {
-                    axis.z: 1
-                    angle: 45
-                },
-                Translate {
-                    x: triangle.width / 2
-                    y: - triangle.height /2
-                }
-            ]
-            antialiasing: true
-        }
-    }
-
-    Item {
-        anchors.fill: triangle
-
-        // Repair clipping/antialiasing artifacts
-        Rectangle {
-            x: _lineThickness
-            y: _lineThickness
-            width: (parent.width - 2 * _lineThickness) / _sqrt2
-            height: width
-            color: _backgroundColor
-            transform: [
-                Rotation {
-                    axis.z: 1
-                    angle: 45
-                },
-                Translate {
-                    x: triangle.width / 2
-                    y: - triangle.height /2
-                }
-            ]
-        }
-    }
-
-    Label {
-        id: label
-
-        color: _foregroundColor
-        anchors.centerIn: contents
-        font {
-            bold: true
-            pixelSize: Theme.fontSizeSmall
         }
     }
 }
