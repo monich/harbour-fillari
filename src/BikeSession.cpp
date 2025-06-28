@@ -668,7 +668,7 @@ BikeSession::Private::onHistoryQueryFinished(
         QJsonObject entry(history.first().toObject());
         entry.insert("distance", 0);
         entry.insert("duration", 0);
-        entry.insert("departureDate", QDateTime::currentDateTime().toString(Qt::ISODate));
+        entry.insert("departureDate", QDateTime::currentDateTime().addSecs(-10).toString(Qt::ISODate));
         entry.insert("returnDate", QJsonValue());
         entry.insert("returnStation", "");
         history.replace(0, entry);

@@ -227,8 +227,15 @@ BikeHistoryModel::Private::updateHistory()
         iRides.removeLast();
     }
     HDEBUG(iRides.count() << "ride(s)");
-    if (!iRides.isEmpty() && iRides.first().inProgress()) {
-        HDEBUG("Ride in progress");
+    if (!iRides.isEmpty() &&
+        iRides.first().inProgress() &&
+        iRides.first().iDepartureDate.isValid()) {
+        Ride& currentRide = iRides.first();
+        const QDateTime now(QDateTime::currentDateTime());
+        const qint64 secs = currentRide.iDepartureDate.secsTo(now);
+
+        currentRide.iDuration = qMax(int(secs), 0);
+        HDEBUG("Ride in progress" << currentRide.iDuration << "sec");
         if (!iRideDurationTimer) {
             iRideDurationTimer = new QTimer(this);
             iRideDurationTimer->setInterval(1000);
