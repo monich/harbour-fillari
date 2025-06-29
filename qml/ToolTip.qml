@@ -1,105 +1,33 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import harbour.fillari 1.0
 
 Item {
-    id: thisItem
-
     property alias text: label.text
 
-    readonly property real _sqrt2: Math.sqrt(2)
-    readonly property int _lineThickness: Math.ceil(Theme.paddingSmall/10)
-    readonly property color _backgroundColor: "#ebebeb"
-    readonly property color _foregroundColor: "#333333"
+    implicitWidth: label.width + 2 * label.x
+    implicitHeight: label.height + 2 * label.y + toolTip.bottomMargin
 
-    width: label.width + 2 * Theme.paddingMedium
-    height: label.height + 2 * Theme.paddingMedium
+    ToolTipItem {
+        id: toolTip
 
-    ShaderEffectSource {
-        anchors.fill: parent
-        sourceItem: Item {
-            width: thisItem.width
-            height: thisItem.height
+        width: Math.floor(parent.width)
+        height: Math.floor(parent.height)
+        backgroundColor: "#ebebeb"
+        borderColor: "#333333"
+        borderWidth: Math.ceil(Theme.paddingSmall/10)
+        bottomMargin: Theme.paddingSmall * 2
+        radius: Theme.paddingSmall
+    }
 
-            Rectangle {
-                y: Theme.paddingSmall
-                width: parent.width
-                height: parent.height - Theme.paddingLarge
-                color: _backgroundColor
-                radius: Theme.paddingSmall
-                border {
-                    width: _lineThickness
-                    color: _foregroundColor
-                }
+    Label {
+        id: label
 
-                Item {
-                    id : triangle
-
-                    anchors {
-                        horizontalCenter: parent.horizontalCenter
-                        top: parent.bottom
-                        topMargin: - _lineThickness
-                    }
-
-                    width: Theme.paddingLarge
-                    height: width
-                    clip: true
-
-                    Rectangle {
-                        width: parent.width / _sqrt2
-                        height: width
-                        color: _backgroundColor
-                        border {
-                            width: _lineThickness
-                            color: _foregroundColor
-                        }
-                        transform: [
-                            Rotation {
-                                axis.z: 1
-                                angle: 45
-                            },
-                            Translate {
-                                x: triangle.width / 2
-                                y: - triangle.height /2
-                            }
-                        ]
-                        antialiasing: true
-                    }
-                }
-
-                Item {
-                    anchors.fill: triangle
-
-                    // Repair clipping/antialiasing artifacts
-                    Rectangle {
-                        x: _lineThickness
-                        y: _lineThickness
-                        width: (parent.width - 2 * _lineThickness) / _sqrt2
-                        height: width
-                        color: _backgroundColor
-                        transform: [
-                            Rotation {
-                                axis.z: 1
-                                angle: 45
-                            },
-                            Translate {
-                                x: triangle.width / 2
-                                y: - triangle.height /2
-                            }
-                        ]
-                    }
-                }
-
-                Label {
-                    id: label
-
-                    color: _foregroundColor
-                    anchors.centerIn: parent
-                    font {
-                        bold: true
-                        pixelSize: Theme.fontSizeSmall
-                    }
-                }
-            }
+        x: Theme.paddingMedium
+        color: toolTip.borderColor
+        font {
+            bold: true
+            pixelSize: Theme.fontSizeSmall
         }
     }
 }

@@ -42,6 +42,7 @@
 #include "BikeSession.h"
 #include "BikeUser.h"
 #include "Fillari.h"
+#include "ToolTipItem.h"
 
 #include "NfcAdapter.h"
 #include "NfcMode.h"
@@ -66,6 +67,8 @@ registerTypes(
     int v1,
     int v2)
 {
+    #define REGISTER_META_TYPE(Class) \
+        qRegisterMetaType<Class>(#Class)
     #define REGISTER_TYPE(uri, v1, v2, Class) \
         qmlRegisterType<Class>(uri, v1, v2, #Class)
     #define REGISTER_SINGLETON_TYPE(uri, v1, v2, Class) \
@@ -74,6 +77,7 @@ registerTypes(
     #define REGISTER_UNCREATABLE_TYPE(uri, v1, v2, Class) \
         qmlRegisterUncreatableType<Class>(uri, v1, v2, #Class, QString());
 
+    REGISTER_META_TYPE(BikeHistoryStats::Mode);
     REGISTER_TYPE(uri, v1, v2, BikeHistoryModel);
     REGISTER_TYPE(uri, v1, v2, BikeHistoryStats);
     REGISTER_TYPE(uri, v1, v2, BikeSession);
@@ -81,10 +85,10 @@ registerTypes(
     REGISTER_TYPE(uri, v1, v2, NfcMode);
     REGISTER_TYPE(uri, v1, v2, NfcParam);
     REGISTER_TYPE(uri, v1, v2, NfcTech);
+    REGISTER_TYPE(uri, v1, v2, ToolTipItem);
     REGISTER_SINGLETON_TYPE(uri, v1, v2, Fillari);
     REGISTER_SINGLETON_TYPE(uri, v1, v2, NfcAdapter);
     REGISTER_SINGLETON_TYPE(uri, v1, v2, NfcSystem);
-    qRegisterMetaType<BikeHistoryStats::Mode>("BikeHistoryStats::Mode");
 }
 
 int main(int argc, char *argv[])

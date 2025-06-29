@@ -175,6 +175,7 @@ HEADERS += \
     src/BikeRequest.h \
     src/BikeSession.h \
     src/BikeUser.h \
+    src/ToolTipItem.h \
     src/Fillari.h
 
 SOURCES += \
@@ -188,6 +189,7 @@ SOURCES += \
     src/BikeSession.cpp \
     src/BikeUser.cpp \
     src/Fillari.cpp \
+    src/ToolTipItem.cpp \
     src/main.cpp
 
 # Icons
