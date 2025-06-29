@@ -3,7 +3,7 @@ NAME = fillari
 
 TARGET = $${PREFIX}-$${NAME}
 CONFIG += sailfishapp link_pkgconfig
-PKGCONFIG += sailfishapp mlite5 glib-2.0 gobject-2.0 gio-unix-2.0
+PKGCONFIG += sailfishapp glib-2.0 gobject-2.0 gio-unix-2.0
 QT += network qml quick dbus
 
 DEFINES += NFCDC_NEED_PEER_SERVICE=0
