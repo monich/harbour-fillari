@@ -10,6 +10,8 @@ CoverBackground {
     readonly property real _opacityLow: 0.4
     readonly property color _hslYellow: "#fcb919"
     readonly property bool _darkOnLight: ('colorScheme' in Theme) && Theme.colorScheme === 1
+    readonly property real _coverActionAreaScale: 1 / parent.scale
+    readonly property int _coverActionAreaHeight: coverActionArea.height  * _coverActionAreaScale
 
     readonly property bool _busy: session.sessionState === BikeSession.UserInfoQuery ||
                                   session.sessionState === BikeSession.HistoryQuery
@@ -31,7 +33,8 @@ CoverBackground {
         width: parent.width
         anchors {
             top: parent.top
-            bottom: actionArea.top
+            bottom: parent.bottom
+            bottomMargin: parent.height - Math.max(actionArea.y, busyIndicator.y)
         }
 
         Item {
@@ -61,8 +64,8 @@ CoverBackground {
         HarbourHighlightIcon {
             id: icon
 
-            readonly property int bottomY: Math.ceil(Math.min((parent.height + height + coverActionArea.height)/2,
-                                                               parent.height - label.paintedHeight - 2 * Theme.paddingLarge))
+            readonly property int bottomY: Math.ceil(Math.min((parent.height + height + _coverActionAreaHeight)/2,
+                                                               parent.height - Theme.itemSizeMedium - 2 * Theme.paddingSmall))
 
             y: bottomY - height
             anchors.horizontalCenter: parent.horizontalCenter
@@ -96,8 +99,9 @@ CoverBackground {
     BusyIndicator {
         id: busyIndicator
 
-        anchors.centerIn: coverActionArea
+        anchors.centerIn: actionArea
         size: BusyIndicatorSize.Small
+        scale: _coverActionAreaScale
         color: Theme.primaryColor
         running: _busy
         Component.onCompleted: {
@@ -114,7 +118,7 @@ CoverBackground {
     Item {
         id: actionArea
 
-        height: (_busy || _canRefresh) ? coverActionArea.height : 0
+        height: (_busy || _canRefresh) ? _coverActionAreaHeight : 0
         anchors {
             left: coverActionArea.left
             right: coverActionArea.right
