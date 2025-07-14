@@ -160,19 +160,54 @@ Item {
                                         bottom: parent.bottom
                                     }
 
-                                    Behavior on height { SmoothedAnimation { duration: 500 } }
+                                    Behavior on height { SmoothedAnimation { duration: 250 } }
                                 }
                             }
                         }
 
+                        onPressedChanged: toolTips.itemAt(model.index).shouldBeVisible = pressed && model.value > 0 && _maxValue
+                    }
+                }
+            }
+        }
+
+        Row {
+            spacing: histogramRow.spacing
+            opacity: histogramRow.opacity
+            visible: opacity > 0
+            anchors {
+                left: histogramRow.left
+                top: histogramRow.top
+                bottom: histogramRow.bottom
+            }
+
+            Repeater {
+                id: toolTips
+
+                model: thisItem.model
+                delegate: Component {
+                    Item {
+                        width: histogramRow.delegateWidth
+                        height: histogramRow.height
+
+                        property bool shouldBeVisible
+
+                        onShouldBeVisibleChanged: {
+                            if (shouldBeVisible) {
+                                visibilityTimer.restart()
+                            }
+                        }
+
+                        Timer {
+                            id: visibilityTimer
+
+                            interval: 1000
+                        }
+
                         Loader {
-                            id: toolTip
-
-                            property bool shouldBeVisible
-
                             y: parent.height * (1 - model.value / _maxValue) - Theme.paddingSmall - height
                             anchors.horizontalCenter: parent.horizontalCenter
-                            opacity: shouldBeVisible || visibilityTimer.running ? 1 : 0
+                            opacity: parent.shouldBeVisible || visibilityTimer.running ? 1 : 0
                             active: opacity > 0
 
                             sourceComponent: Component {
@@ -181,22 +216,8 @@ Item {
                                 }
                             }
 
-                            onShouldBeVisibleChanged: {
-                                if (shouldBeVisible) {
-                                    visibilityTimer.restart()
-                                }
-                            }
-
-                            Timer {
-                                id: visibilityTimer
-
-                                interval: 1000
-                            }
-
                             Behavior on opacity { FadeAnimation { } }
                         }
-
-                        onPressedChanged: toolTip.shouldBeVisible = pressed && model.value > 0 && _maxValue
                     }
                 }
             }
