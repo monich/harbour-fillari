@@ -291,10 +291,11 @@ void
 BikeHistoryModel::setHistory(
     QJsonArray aHistory)
 {
-    // Assume that it's actually changed
-    iPrivate->iHistory = aHistory;
-    iPrivate->updateHistory();
-    Q_EMIT historyChanged();
+    if (iPrivate->iHistory != aHistory) {
+        iPrivate->iHistory = aHistory;
+        iPrivate->updateHistory();
+        Q_EMIT historyChanged();
+    }
 }
 
 int
