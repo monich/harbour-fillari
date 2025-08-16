@@ -41,6 +41,7 @@
 
 #include <QtCore/QDate>
 #include <QtCore/QDateTime>
+#include <QtCore/QHash>
 #include <QtCore/QList>
 #include <QtCore/QJsonObject>
 #include <QtCore/QVector>
@@ -82,29 +83,45 @@ public:
         RoleValue
     };
 
+    struct Stats {
+        uint iRides;
+        uint iDistance;
+        uint iDuration;
+    };
+
+    struct Stash {
+        Stash(Private*);
+        void queueSignals(Private*);
+
+        const int iMaxValue;
+        const int iTotal;
+    };
+
     Private();
 
     static QString shortMonthName(int);
+    static int value(const Stats*, Mode);
 
     void queueSignal(Signal);
     void emitQueuedSignals(BikeHistoryStats*);
     void emitDataChanged(BikeHistoryStats*);
     void updateStats();
-    void updateTotals();
+    int maxValue();
+    int total();
+    int yearTotal(int, Mode);
+    QVariant data(int, Role);
 
 public:
     SignalMask iQueuedSignals;
     Signal iFirstQueuedSignal;
+    QJsonArray iHistory;
     Mode iMode;
     int iYear;
-    QJsonArray iHistory;
-    uint iMaxValue;
-    uint iTotal;
+    QHash<int,Stats> iYearTotal;
+    Stats iMonthTotal[Months];
+    Stats iMaxPerMonth;
     const uint iFirstMonth;
     const uint iMonthCount;
-    uint iRides[Months];
-    uint iDistance[Months];
-    uint iDuration[Months];
 };
 
 BikeHistoryStats::Private::Private() :
@@ -112,14 +129,11 @@ BikeHistoryStats::Private::Private() :
     iFirstQueuedSignal(SignalCount),
     iMode(Distance),
     iYear(0),
-    iMaxValue(0),
-    iTotal(0),
     iFirstMonth(3), // April (zero-based)
     iMonthCount(7)
 {
-    memset(iRides, 0, sizeof(iRides));
-    memset(iDistance, 0, sizeof(iDistance));
-    memset(iDuration, 0, sizeof(iDuration));
+    memset(iMonthTotal, 0, sizeof(iMonthTotal));
+    memset(&iMaxPerMonth, 0, sizeof(iMaxPerMonth));
 }
 
 //static
@@ -132,6 +146,20 @@ BikeHistoryStats::Private::shortMonthName(
     // Make sure that the short month name is really short
     name.truncate(3);
     return name;
+}
+
+// static
+int
+BikeHistoryStats::Private::value(
+    const Stats* aStats,
+    Mode aMode)
+{
+    switch (aMode) {
+    case Rides: return aStats->iRides;
+    case Distance: return aStats->iDistance;
+    case Duration: return aStats->iDuration;
+    }
+    return 0;
 }
 
 void
@@ -188,14 +216,36 @@ BikeHistoryStats::Private::emitDataChanged(
         QVector<int>{Private::RoleValue});
 }
 
+inline
+int
+BikeHistoryStats::Private::maxValue()
+{
+    return value(&iMaxPerMonth, iMode);
+}
+
+inline
+int
+BikeHistoryStats::Private::total()
+{
+    return yearTotal(iYear, iMode);
+}
+
+int
+BikeHistoryStats::Private::yearTotal(
+    int aYear,
+    Mode aMode)
+{
+    return iYearTotal.contains(aYear) ? value(&iYearTotal[aYear], aMode) : 0;
+}
+
 void
 BikeHistoryStats::Private::updateStats()
 {
     const uint n = iHistory.size();
 
-    memset(iRides, 0, sizeof(iRides));
-    memset(iDistance, 0, sizeof(iDistance));
-    memset(iDuration, 0, sizeof(iDuration));
+    iYearTotal.clear();
+    memset(iMonthTotal, 0, sizeof(iMonthTotal));
+    memset(&iMaxPerMonth, 0, sizeof(iMaxPerMonth));
 
     for (uint i = 0; i < n; i++) {
         const QJsonObject entry(iHistory.at(i).toObject());
@@ -206,62 +256,80 @@ BikeHistoryStats::Private::updateStats()
         const int year = date.year();
         const int month = date.month();
 
-        if (month && (!iYear || iYear == year)) {
-            const uint monthIndex = month - 1;
+        if (year) {
+            Stats* stats = &iYearTotal[year];
 
-            iRides[monthIndex] += 1;
-            iDistance[monthIndex] += distance;
-            iDuration[monthIndex] += duration;
+            stats->iRides += 1;
+            stats->iDistance += distance;
+            stats->iDuration += duration;
+        }
+
+        if (month && (!iYear || iYear == year)) {
+            Stats* stats = iMonthTotal + (month - 1);
+
+            if ((stats->iRides += 1) > iMaxPerMonth.iRides) {
+                iMaxPerMonth.iRides = stats->iRides;
+            }
+            if ((stats->iDistance += distance) > iMaxPerMonth.iDistance) {
+                iMaxPerMonth.iDistance = stats->iDistance;
+            }
+            if ((stats->iDuration += duration) > iMaxPerMonth.iDuration) {
+                iMaxPerMonth.iDuration = stats->iDuration;
+            }
         }
     }
 
-    #define PRINT_RIDES(i) << iRides[i]
-    #define PRINT_DISTANCE(i) << iDistance[i]
-    #define PRINT_DIRATION(i) << iDuration[i]
+    #define PRINT_RIDES(i) << iMonthTotal[i].iRides
+    #define PRINT_DISTANCE(i) << iMonthTotal[i].iDistance
+    #define PRINT_DIRATION(i) << iMonthTotal[i].iDuration
     HDEBUG("Rides:" X12(PRINT_RIDES));
     HDEBUG("Distances:" X12(PRINT_DISTANCE) << "m");
     HDEBUG("Durations:" X12(PRINT_DIRATION) << "sec");
     #undef PRINT_RIDES
     #undef PRINT_DISTANCE
     #undef PRINT_DIRATION
-
-    updateTotals();
 }
 
-void
-BikeHistoryStats::Private::updateTotals()
+QVariant
+BikeHistoryStats::Private::data(
+    int aRow,
+    Role aRole)
 {
-    const uint* values = iRides;
-    const uint prevMaxValue = iMaxValue;
-    const uint prevTotal = iTotal;
+    if (uint(aRow) < iMonthCount) {
+        const uint monthIndex = iFirstMonth + aRow;
+        const Stats* stats = iMonthTotal + monthIndex;
 
-    switch (iMode) {
-    case Rides:
-        values = iRides;
-        break;
-    case Distance:
-        values = iDistance;
-        break;
-    case Duration:
-        values = iDuration;
-        break;
+        switch (aRole) {
+        case RoleMonth:
+            return shortMonthName(monthIndex + 1);
+        case RoleValue:
+            return value(stats, iMode);
+        }
     }
+    return QVariant();
+}
 
-    iMaxValue = 0;
-    iTotal = 0;
-    for (uint i = 0; i < uint(Private::Months); i++) {
-        iMaxValue = qMax(values[i], iMaxValue);
-        iTotal += values[i];
+// ==========================================================================
+// BikeHistoryStats::Private::Stash
+// ==========================================================================
+
+BikeHistoryStats::Private::Stash::Stash(
+    Private* aPrivate) :
+    iMaxValue(aPrivate->maxValue()),
+    iTotal(aPrivate->total())
+{}
+
+void
+BikeHistoryStats::Private::Stash::queueSignals(
+    Private* aPrivate)
+{
+    if (aPrivate->maxValue() != iMaxValue) {
+        HDEBUG("Max value" << aPrivate->maxValue());
+        aPrivate->queueSignal(SignalMaxValueChanged);
     }
-
-    if (iMaxValue != prevMaxValue) {
-        HDEBUG("Max value" << iMaxValue);
-        queueSignal(SignalMaxValueChanged);
-    }
-
-    if (iTotal != prevTotal) {
-        HDEBUG("Total" << iTotal);
-        queueSignal(SignalTotalChanged);
+    if (aPrivate->total() != iTotal) {
+        HDEBUG("Total" << aPrivate->total());
+        aPrivate->queueSignal(SignalTotalChanged);
     }
 }
 
@@ -290,12 +358,17 @@ void
 BikeHistoryStats::setHistory(
     QJsonArray aHistory)
 {
-    // Assume that it's actually changed
-    iPrivate->iHistory = aHistory;
-    iPrivate->queueSignal(Private::SignalHistoryChanged);
-    iPrivate->updateStats();
-    iPrivate->emitQueuedSignals(this);
-    iPrivate->emitDataChanged(this);
+    if (iPrivate->iHistory != aHistory) {
+        Private::Stash stash(iPrivate);
+
+        iPrivate->iHistory = aHistory;
+        iPrivate->updateStats();
+
+        stash.queueSignals(iPrivate);
+        iPrivate->queueSignal(Private::SignalHistoryChanged);
+        iPrivate->emitQueuedSignals(this);
+        iPrivate->emitDataChanged(this);
+    }
 }
 
 BikeHistoryStats::Mode
@@ -309,10 +382,13 @@ BikeHistoryStats::setMode(
     Mode aMode)
 {
     if (iPrivate->iMode != aMode) {
+        Private::Stash stash(iPrivate);
+
         HDEBUG(aMode);
         iPrivate->iMode = aMode;
+
+        stash.queueSignals(iPrivate);
         iPrivate->queueSignal(Private::SignalModeChanged);
-        iPrivate->updateTotals();
         iPrivate->emitQueuedSignals(this);
         iPrivate->emitDataChanged(this);
     }
@@ -329,10 +405,14 @@ BikeHistoryStats::setYear(
     int aYear)
 {
     if (iPrivate->iYear != aYear) {
+        Private::Stash stash(iPrivate);
+
         HDEBUG(aYear);
         iPrivate->iYear = aYear;
-        iPrivate->queueSignal(Private::SignalYearChanged);
         iPrivate->updateStats();
+
+        stash.queueSignals(iPrivate);
+        iPrivate->queueSignal(Private::SignalYearChanged);
         iPrivate->emitQueuedSignals(this);
         iPrivate->emitDataChanged(this);
     }
@@ -341,13 +421,21 @@ BikeHistoryStats::setYear(
 int
 BikeHistoryStats::maxValue() const
 {
-    return iPrivate->iMaxValue;
+    return iPrivate->maxValue();
 }
 
 int
 BikeHistoryStats::total() const
 {
-    return iPrivate->iTotal;
+    return iPrivate->total();
+}
+
+int
+BikeHistoryStats::yearTotal(
+    int aYear,
+    Mode aMode)
+{
+    return iPrivate->yearTotal(aYear, aMode);
 }
 
 int
@@ -355,14 +443,8 @@ BikeHistoryStats::monthTotal(
     int aMonth,
     Mode aMode)
 {
-    if (aMonth > 0 && aMonth <= Private::Months) {
-        switch (aMode) {
-        case Rides: return iPrivate->iRides[aMonth - 1];
-        case Distance: return iPrivate->iDistance[aMonth - 1];
-        case Duration: return iPrivate->iDuration[aMonth - 1];
-        }
-    }
-    return 0;
+    return (aMonth > 0 && aMonth <= Private::Months) ?
+        Private::value(iPrivate->iMonthTotal + (aMonth - 1), aMode) : 0;
 }
 
 QString
@@ -395,22 +477,5 @@ BikeHistoryStats::data(
     const QModelIndex& aIndex,
     int aRole) const
 {
-    const int row = aIndex.row();
-
-    if (row >= 0 && uint(row) < iPrivate->iMonthCount) {
-        const uint monthIndex = iPrivate->iFirstMonth + row;
-
-        switch ((Private::Role)aRole) {
-        case Private::RoleMonth:
-            return Private::shortMonthName(monthIndex + 1);
-        case Private::RoleValue:
-            switch (iPrivate->iMode) {
-            case Rides: return iPrivate->iRides[monthIndex];
-            case Distance: return iPrivate->iDistance[monthIndex];
-            case Duration: return iPrivate->iDuration[monthIndex];
-            }
-            break;
-        }
-    }
-    return QVariant();
+    return iPrivate->data(aIndex.row(), (Private::Role) aRole);
 }

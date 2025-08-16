@@ -7,6 +7,7 @@ Item {
 
     property var model
     property bool busy
+    readonly property int mode: model.mode
 
     readonly property real _opacityLow: 0.4
     readonly property int _margin: Theme.paddingLarge
@@ -16,14 +17,13 @@ Item {
     readonly property color _lineColor: Theme.rgba(Theme.primaryColor, _opacityLow)
     readonly property color _hslYellow: "#fcb919"
     readonly property int _maxValue: model.maxValue
-    readonly property int _mode: model.mode
 
     ModeSwitch {
         id: buttons
 
         width: parent.width
-        mode: _mode
-        onModeChanged: thisItem.model.mode = mode
+        mode: thisItem.mode
+        onModeChanged: model.mode = mode
     }
 
     Rectangle {
@@ -67,7 +67,7 @@ Item {
         Repeater {
             id: grid
 
-            readonly property int _step: Fillari.step(_maxValue, Math.min((histogramRow.height - header.height) / Theme.itemSizeSmall, 5), _mode)
+            readonly property int _step: Fillari.step(_maxValue, Math.min((histogramRow.height - header.height) / Theme.itemSizeSmall, 5), thisItem.mode)
             readonly property int _ystep: _maxValue ? histogramRow.height * _step / _maxValue : 0
 
             model:  _step ? Math.floor(_maxValue / _step) : 0
@@ -84,7 +84,7 @@ Item {
                 Label {
                     font.pixelSize: Theme.fontSizeSmall
                     color: _lineColor
-                    text: Fillari.format((model.modelData + 1) * grid._step, _mode)
+                    text: Fillari.format((model.modelData + 1) * grid._step, thisItem.mode)
                     opacity: parent.y > (header.y + header.height + Theme.paddingMedium) ? 1 : 0
                 }
 
@@ -212,7 +212,7 @@ Item {
 
                             sourceComponent: Component {
                                 ToolTip {
-                                    text: Fillari.format(model.value, _mode)
+                                    text: Fillari.format(model.value, thisItem.mode)
                                 }
                             }
 

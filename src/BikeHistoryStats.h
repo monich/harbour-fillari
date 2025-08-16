@@ -89,6 +89,7 @@ public:
     int maxValue() const;
     int total() const;
 
+    Q_INVOKABLE int yearTotal(int, Mode);
     Q_INVOKABLE int monthTotal(int, Mode);
     Q_INVOKABLE QString formatMonthTotal(int, Mode);
 

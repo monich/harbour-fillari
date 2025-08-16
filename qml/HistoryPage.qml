@@ -64,7 +64,9 @@ Page {
                         Repeater {
                             model: _years.length
                             MenuItem {
-                                text: _years[modelData]
+                                readonly property int year: _years[modelData]
+                                readonly property string description: Fillari.format(stats.yearTotal(year, graph.mode), graph.mode)
+                                text: year
                             }
                         }
                     }
