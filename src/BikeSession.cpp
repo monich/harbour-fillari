@@ -72,6 +72,9 @@
     s(FullName,fullName) \
     s(HslCard,hslCard) \
     s(Nfcid1,nfcid1) \
+    s(PassBeginDate,passBeginDate) \
+    s(PassEndDate,passEndDate) \
+    s(PassActive,passActive) \
     s(History,history) \
     s(RideInProgress,rideInProgress) \
     s(RideDuration,rideDuration) \
@@ -117,13 +120,14 @@ class BikeSession::Private :
     static const QString LOGIN_FILE;
 
     #if HARBOUR_DEBUG
-    static const char* sessionName(State);
+    static const char* stateName(State);
     #endif
 
 public:
     Private(BikeSession*);
 
     static int last(const QList<int>&);
+    static QDate parseDate(const QString&);
 
     BikeSession* parentObject();
     void queueSignal(Signal);
@@ -137,6 +141,9 @@ public:
     void setFirstName(QString);
     void setLastName(QString);
     void setIdent(QString, QString);
+    void setPassBeginDate(QString);
+    void setPassEndDate(QString);
+    bool passActive() const;
     bool rideInProgress() const;
     int rideDuration() const;
     void start();
@@ -184,6 +191,8 @@ public:
     QString iLastName;
     QString iHslCard;
     QString iNfcid1;
+    QDate iPassBeginDate;
+    QDate iPassEndDate;
     QJsonArray iHistory;
     QTimer* iRideDurationTimer;
     QList<int> iYears;
@@ -211,6 +220,15 @@ BikeSession::Private::last(
     const QList<int>& aList)
 {
     return aList.isEmpty() ? 0 : aList.last();
+}
+
+// static
+inline
+QDate
+BikeSession::Private::parseDate(
+    const QString& aString)
+{
+    return QDate::fromString(aString, QStringLiteral("yyyy-MM-dd"));
 }
 
 inline
@@ -268,7 +286,7 @@ BikeSession::Private::emitQueuedSignals()
 #if HARBOUR_DEBUG
 //static
 const char*
-BikeSession::Private::sessionName(
+BikeSession::Private::stateName(
     State aState)
 {
     switch (aState) {
@@ -300,7 +318,7 @@ BikeSession::Private::setState(
     State aState)
 {
     if (iState != aState) {
-        HDEBUG(sessionName(iState) << "=>" << sessionName(aState));
+        HDEBUG(stateName(iState) << "=>" << stateName(aState));
         iState = aState;
         queueSignal(SignalSessionStateChanged);
     }
@@ -394,6 +412,43 @@ BikeSession::Private::setIdent(
         HDEBUG("NFCID1" << qPrintable(nfcid1));
         queueSignal(SignalNfcid1Changed);
     }
+}
+
+void
+BikeSession::Private::setPassBeginDate(
+    QString aDate)
+{
+    const QDate date(parseDate(aDate));
+
+    if (iPassBeginDate.isValid()!= date.isValid() || iPassBeginDate != date) {
+        iPassBeginDate = date;
+        HDEBUG(iPassBeginDate);
+        queueSignal(SignalPassBeginDateChanged);
+    }
+}
+
+void
+BikeSession::Private::setPassEndDate(
+    QString aDate)
+{
+    const QDate date(parseDate(aDate));
+
+    if (iPassEndDate.isValid()!= date.isValid() || iPassEndDate != date) {
+        iPassEndDate = date;
+        HDEBUG(iPassEndDate);
+        queueSignal(SignalPassEndDateChanged);
+    }
+}
+
+bool
+BikeSession::Private::passActive() const
+{
+    if (iPassBeginDate.isValid() && iPassEndDate.isValid()) {
+        const QDate today(QDate::currentDate());
+
+        return today >= iPassBeginDate && today <= iPassEndDate;
+    }
+    return false;
 }
 
 bool
@@ -735,8 +790,50 @@ void
 BikeSession::Private::onServiceQueryFinished(
     const QJsonObject& aServiceInfo)
 {
+    // {
+    //   "id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    //   "first_name": "Slava",
+    //   "last_name": "Monich",
+    //   "email": "xxxxx@monich.com",
+    //   "birth_date": "xxxx-xx-xx",
+    //   "company_name": "",
+    //   "address_line1": "xxxxxxxxxxxxxxxxxx, Helsinki",
+    //   "address_line2": "",
+    //   "postal_code": "xxxxx",
+    //   "city": "",
+    //   "region": "",
+    //   "country": "FI",
+    //   "mobile_phone": "+358xxxxxxxxx",
+    //   "other_phone": "",
+    //   "type": "",
+    //   "formula": "Year",
+    //   "coupon": "",
+    //   "ident_type": "card",
+    //   "ident_data": "xxxxxxxxxxxxxxxx",
+    //   "pin_code": "****",
+    //   "lang": "fi_FI",
+    //   "max_bikes": 1,
+    //   "beg_date": "2025-03-21",
+    //   "end_date": "2025-10-31",
+    //   "end_hour": null,
+    //   "future_formula": "",
+    //   "future_beg_date": null,
+    //   "future_end_date": null,
+    //   "future_max_bikes": null,
+    //   "forbidden": false,
+    //   "balance_forbidden": false,
+    //   "status": "active",
+    //   "balance": 0,
+    //   "balance_minimum": -100
+    // }
+    const bool passWasActive = passActive();
     setIdent(aServiceInfo.value(QStringLiteral("ident_type")).toString(),
         aServiceInfo.value(QStringLiteral("ident_data")).toString());
+    setPassBeginDate(aServiceInfo.value(QStringLiteral("beg_date")).toString());
+    setPassEndDate(aServiceInfo.value(QStringLiteral("end_date")).toString());
+    if (passWasActive != passActive()) {
+        queueSignal(SignalPassActiveChanged);
+    }
     refreshHistory();
     updated();
     emitQueuedSignals();
@@ -955,6 +1052,24 @@ QString
 BikeSession::nfcid1() const
 {
     return iPrivate->iNfcid1;
+}
+
+QDate
+BikeSession::passBeginDate() const
+{
+    return iPrivate->iPassBeginDate;
+}
+
+QDate
+BikeSession::passEndDate() const
+{
+    return iPrivate->iPassEndDate;
+}
+
+bool
+BikeSession::passActive() const
+{
+    return iPrivate->passActive();
 }
 
 QJsonArray

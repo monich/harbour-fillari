@@ -10,6 +10,7 @@ Item {
     property var session
 
     property var _remorsePopup
+    readonly property real _opacityLow: 0.4
     readonly property bool _remorsePopupVisible: _remorsePopup ? _remorsePopup.visible : false
     readonly property color _hslYellow: "#fcb919"
     readonly property bool _busy: session.sessionState === BikeSession.UserInfoQuery ||
@@ -38,7 +39,7 @@ Item {
 
     SilicaFlickable {
         width: parent.width
-        contentHeight: header.height + content.height
+        contentHeight: header.height + content.height + content.spacing
         anchors.fill: parent
 
         PullDownMenu {
@@ -229,7 +230,16 @@ Item {
                 }
             }
 
-            DummyItem { height: parent.spacing }
+            Label {
+                width: parent.width
+                //: Label
+                //% "Your pass is valid until %1"
+                text: qsTrId("fillari-main-pass-valid-to").arg(session.passEndDate.toLocaleDateString(Qt.locale(), "dd.MM.yyyy"))
+                font.pixelSize: Theme.fontSizeSmall
+                visible: (!_busy || latestRides.count) && session.passActive
+                horizontalAlignment: Text.AlignRight
+                opacity: _opacityLow
+            }
         }
 
         VerticalScrollDecorator {}

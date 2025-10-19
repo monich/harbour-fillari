@@ -158,5 +158,10 @@
         <extracomment>Button label</extracomment>
         <translation type="unfinished">Valmis</translation>
     </message>
+    <message id="fillari-main-pass-valid-to">
+        <source>Your pass is valid until %1</source>
+        <extracomment>Label</extracomment>
+        <translation>Käyttöoikeutesi on voimassa %1 asti</translation>
+    </message>
 </context>
 </TS>
