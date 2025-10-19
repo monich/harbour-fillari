@@ -215,10 +215,12 @@ Item {
                 id: latestRides
 
                 visible: count > 0
-                width: parent.width
+                x: -content.x // Fill the entire flickable (horizontally)
+                width: parent.width + 2 * content.x
                 height: contentHeight
                 model: lastTrips
                 delegate: HistoryItem {
+                    horizontalMargins: content.x
                     inProgress: model.inProgress
                     departureStation: model.departureStation
                     departureDate: model.departureDate
