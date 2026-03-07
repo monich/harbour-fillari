@@ -80,8 +80,8 @@ defineTest(generateStub) {
     xml = $${LIBGNFCDC_SPEC}/org.sailfishos.nfc.$${1}.xml
     cmd = gdbus-codegen --generate-c-code org.sailfishos.nfc.$${1} $${xml}
 
-    gen_h = org.sailfishos.nfc.$${1}.h
-    gen_c = org.sailfishos.nfc.$${1}.c
+    gen_h = $${OUT_PWD}/org.sailfishos.nfc.$${1}.h
+    gen_c = $${OUT_PWD}/org.sailfishos.nfc.$${1}.c
     target_h = org_sailfishos_nfc_$${1}_h
     target_c = org_sailfishos_nfc_$${1}_c
 
@@ -97,7 +97,7 @@ defineTest(generateStub) {
     QMAKE_EXTRA_TARGETS += $${target_h}
 
     $${target_c}.target = $${gen_c}
-    $${target_c}.depends = $${gen_h}
+    $${target_c}.depends = $${target_h}
     export($${target_c}.target)
     export($${target_c}.depends)
 
