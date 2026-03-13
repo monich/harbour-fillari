@@ -149,6 +149,7 @@ INCLUDEPATH += \
 
 HEADERS += \
     $${HARBOUR_LIB_INCLUDE}/HarbourDebug.h \
+    $${HARBOUR_LIB_INCLUDE}/HarbourParentSignalQueueObject.h
 
 SOURCES += \
 

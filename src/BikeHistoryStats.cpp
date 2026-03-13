@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Slava Monich <slava@monich.com>
+ * Copyright (C) 2025-2026 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -47,6 +47,7 @@
 #include <QtCore/QVector>
 
 #include "HarbourDebug.h"
+#include "HarbourParentSignalQueueObject.h"
 
 #define X12(x) x(0) x(1) x(2) x(3) x(4) x(5) x(6) x(7) x(8) x(9) x(10) x(11)
 
@@ -62,18 +63,23 @@
 // BikeHistoryStats::Private
 // ==========================================================================
 
-class BikeHistoryStats::Private
-{
-public:
-    typedef void (BikeHistoryStats::*SignalEmitter)();
-    typedef uint SignalMask;
-    enum Signal {
-        #define SIGNAL_ENUM_(Name,name) Signal##Name##Changed,
-        QUEUED_SIGNALS(SIGNAL_ENUM_)
-        #undef  SIGNAL_ENUM_
-        SignalCount
-    };
+enum BikeHistoryStatsSignal {
+    #define SIGNAL_ENUM_(Name,name) Signal##Name##Changed,
+    QUEUED_SIGNALS(SIGNAL_ENUM_)
+    #undef  SIGNAL_ENUM_
+    BikeHistoryStatsSignalCount
+};
 
+typedef HarbourParentSignalQueueObject<BikeHistoryStats,
+    BikeHistoryStatsSignal, BikeHistoryStatsSignalCount>
+    BikeHistoryStatsPrivateBase;
+
+class BikeHistoryStats::Private :
+    public BikeHistoryStatsPrivateBase
+{
+    static const SignalEmitter gSignalEmitters[];
+
+public:
     enum {
         Months = 12
     };
@@ -97,14 +103,12 @@ public:
         const int iTotal;
     };
 
-    Private();
+    Private(BikeHistoryStats*);
 
     static QString shortMonthName(int);
     static int value(const Stats*, Mode);
 
-    void queueSignal(Signal);
-    void emitQueuedSignals(BikeHistoryStats*);
-    void emitDataChanged(BikeHistoryStats*);
+    void emitDataChanged();
     void updateStats();
     int maxValue();
     int total();
@@ -112,8 +116,6 @@ public:
     QVariant data(int, Role);
 
 public:
-    SignalMask iQueuedSignals;
-    Signal iFirstQueuedSignal;
     QJsonArray iHistory;
     Mode iMode;
     int iYear;
@@ -124,9 +126,17 @@ public:
     const uint iMonthCount;
 };
 
-BikeHistoryStats::Private::Private() :
-    iQueuedSignals(0),
-    iFirstQueuedSignal(SignalCount),
+/* static */
+const BikeHistoryStats::Private::SignalEmitter
+BikeHistoryStats::Private::gSignalEmitters [] = {
+    #define SIGNAL_EMITTER_(Name,name) &BikeHistoryStats::name##Changed,
+    QUEUED_SIGNALS(SIGNAL_EMITTER_)
+    #undef SIGNAL_EMITTER_
+};
+
+BikeHistoryStats::Private::Private(
+    BikeHistoryStats* aParent) :
+    BikeHistoryStatsPrivateBase(aParent, gSignalEmitters),
     iMode(Distance),
     iYear(0),
     iFirstMonth(3), // April (zero-based)
@@ -163,56 +173,12 @@ BikeHistoryStats::Private::value(
 }
 
 void
-BikeHistoryStats::Private::queueSignal(
-    Signal aSignal)
+BikeHistoryStats::Private::emitDataChanged()
 {
-    if (aSignal >= 0 && aSignal < SignalCount) {
-        const SignalMask signalBit = (SignalMask(1) << aSignal);
+    BikeHistoryStats* model = parentObject();
 
-        if (iQueuedSignals) {
-            iQueuedSignals |= signalBit;
-            if (iFirstQueuedSignal > aSignal) {
-                iFirstQueuedSignal = aSignal;
-            }
-        } else {
-            iQueuedSignals = signalBit;
-            iFirstQueuedSignal = aSignal;
-        }
-    }
-}
-
-void
-BikeHistoryStats::Private::emitQueuedSignals(
-    BikeHistoryStats* aObject)
-{
-    static const SignalEmitter emitSignal [] = {
-        #define SIGNAL_EMITTER_(Name,name) &BikeHistoryStats::name##Changed,
-        QUEUED_SIGNALS(SIGNAL_EMITTER_)
-        #undef SIGNAL_EMITTER_
-    };
-
-    if (iQueuedSignals) {
-        uint i = iFirstQueuedSignal;
-
-        // Reset first queued signal before emitting the signals.
-        // Signal handlers may emit new signals.
-        iFirstQueuedSignal = SignalCount;
-        for (; i < SignalCount && iQueuedSignals; i++) {
-            const SignalMask signalBit = (SignalMask(1) << i);
-            if (iQueuedSignals & signalBit) {
-                iQueuedSignals &= ~signalBit;
-                Q_EMIT (aObject->*(emitSignal[i]))();
-            }
-        }
-    }
-}
-
-void
-BikeHistoryStats::Private::emitDataChanged(
-    BikeHistoryStats* aModel)
-{
-    Q_EMIT aModel->dataChanged(aModel->index(0),
-        aModel->index(iMonthCount - 1),
+    Q_EMIT model->dataChanged(model->index(0),
+        model->index(iMonthCount - 1),
         QVector<int>{Private::RoleValue});
 }
 
@@ -340,13 +306,8 @@ BikeHistoryStats::Private::Stash::queueSignals(
 BikeHistoryStats::BikeHistoryStats(
     QObject* aParent) :
     QAbstractListModel(aParent),
-    iPrivate(new Private())
+    iPrivate(new Private(this))
 {}
-
-BikeHistoryStats::~BikeHistoryStats()
-{
-    delete iPrivate;
-}
 
 QJsonArray
 BikeHistoryStats::history() const
@@ -365,9 +326,9 @@ BikeHistoryStats::setHistory(
         iPrivate->updateStats();
 
         stash.queueSignals(iPrivate);
-        iPrivate->queueSignal(Private::SignalHistoryChanged);
-        iPrivate->emitQueuedSignals(this);
-        iPrivate->emitDataChanged(this);
+        iPrivate->queueSignal(SignalHistoryChanged);
+        iPrivate->emitQueuedSignals();
+        iPrivate->emitDataChanged();
     }
 }
 
@@ -388,9 +349,9 @@ BikeHistoryStats::setMode(
         iPrivate->iMode = aMode;
 
         stash.queueSignals(iPrivate);
-        iPrivate->queueSignal(Private::SignalModeChanged);
-        iPrivate->emitQueuedSignals(this);
-        iPrivate->emitDataChanged(this);
+        iPrivate->queueSignal(SignalModeChanged);
+        iPrivate->emitQueuedSignals();
+        iPrivate->emitDataChanged();
     }
 }
 
@@ -412,9 +373,9 @@ BikeHistoryStats::setYear(
         iPrivate->updateStats();
 
         stash.queueSignals(iPrivate);
-        iPrivate->queueSignal(Private::SignalYearChanged);
-        iPrivate->emitQueuedSignals(this);
-        iPrivate->emitDataChanged(this);
+        iPrivate->queueSignal(SignalYearChanged);
+        iPrivate->emitQueuedSignals();
+        iPrivate->emitDataChanged();
     }
 }
 

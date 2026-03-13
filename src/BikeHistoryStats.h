@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Slava Monich <slava@monich.com>
+ * Copyright (C) 2025-2026 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -75,7 +75,6 @@ public:
     };
 
     BikeHistoryStats(QObject* aParent = Q_NULLPTR);
-    ~BikeHistoryStats();
 
     QJsonArray history() const;
     void setHistory(QJsonArray);

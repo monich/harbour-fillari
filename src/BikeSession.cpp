@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Slava Monich <slava@monich.com>
+ * Copyright (C) 2025-2026 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -57,6 +57,7 @@
 #include <QtNetwork/QNetworkCookie>
 
 #include "HarbourDebug.h"
+#include "HarbourParentSignalQueueObject.h"
 
 // s(SignalName,signalName)
 #define QUEUED_SIGNALS(s) \
@@ -102,20 +103,23 @@ public:
 // BikeSession::Private
 // ==========================================================================
 
+enum BikeSessionSignal {
+    #define SIGNAL_ENUM_(Name,name) Signal##Name##Changed,
+    QUEUED_SIGNALS(SIGNAL_ENUM_)
+    #undef  SIGNAL_ENUM_
+    BikeSessionSignalCount
+};
+
+typedef HarbourParentSignalQueueObject<BikeSession,
+    BikeSessionSignal, BikeSessionSignalCount>
+    BikeSessionPrivateBase;
+
 class BikeSession::Private :
-    public QObject
+    public BikeSessionPrivateBase
 {
     Q_OBJECT
 
-    typedef void (BikeSession::*SignalEmitter)();
-    typedef uint SignalMask;
-    enum Signal {
-        #define SIGNAL_ENUM_(Name,name) Signal##Name##Changed,
-        QUEUED_SIGNALS(SIGNAL_ENUM_)
-        #undef  SIGNAL_ENUM_
-        SignalCount
-    };
-
+    static const SignalEmitter gSignalEmitters[];
     static const QString COOKIES_FILE;
     static const QString LOGIN_FILE;
 
@@ -128,10 +132,6 @@ public:
 
     static int last(const QList<int>&);
     static QDate parseDate(const QString&);
-
-    BikeSession* parentObject();
-    void queueSignal(Signal);
-    void emitQueuedSignals();
 
     void setDataDir(QString);
     void setLogin(QString);
@@ -176,8 +176,6 @@ private Q_SLOTS:
     void onHttpError(int);
 
 public:
-    SignalMask iQueuedSignals;
-    Signal iFirstQueuedSignal;
     QNetworkAccessManager iNetworkAccessManager;
     BikeRequest::Ptr iRequest;
     QString iDataDir;
@@ -201,12 +199,16 @@ public:
 
 const QString BikeSession::Private::COOKIES_FILE("Cookies");
 const QString BikeSession::Private::LOGIN_FILE("Login");
+const BikeSession::Private::SignalEmitter
+BikeSession::Private::gSignalEmitters [] = {
+    #define SIGNAL_EMITTER_(Name,name) &BikeSession::name##Changed,
+    QUEUED_SIGNALS(SIGNAL_EMITTER_)
+    #undef  SIGNAL_EMITTER_
+};
 
 BikeSession::Private::Private(
     BikeSession* aParent) :
-    QObject(aParent),
-    iQueuedSignals(0),
-    iFirstQueuedSignal(SignalCount),
+    BikeSessionPrivateBase(aParent, gSignalEmitters),
     iHttpError(0),
     iState(None),
     iRideDurationTimer(Q_NULLPTR),
@@ -229,58 +231,6 @@ BikeSession::Private::parseDate(
     const QString& aString)
 {
     return QDate::fromString(aString, QStringLiteral("yyyy-MM-dd"));
-}
-
-inline
-BikeSession*
-BikeSession::Private::parentObject()
-{
-    return qobject_cast<BikeSession*>(parent());
-}
-
-void
-BikeSession::Private::queueSignal(
-    Signal aSignal)
-{
-    if (aSignal >= 0 && aSignal < SignalCount) {
-        const SignalMask signalBit = (SignalMask(1) << aSignal);
-
-        if (iQueuedSignals) {
-            iQueuedSignals |= signalBit;
-            if (iFirstQueuedSignal > aSignal) {
-                iFirstQueuedSignal = aSignal;
-            }
-        } else {
-            iQueuedSignals = signalBit;
-            iFirstQueuedSignal = aSignal;
-        }
-    }
-}
-
-void
-BikeSession::Private::emitQueuedSignals()
-{
-    static const SignalEmitter emitSignal [] = {
-        #define SIGNAL_EMITTER_(Name,name) &BikeSession::name##Changed,
-        QUEUED_SIGNALS(SIGNAL_EMITTER_)
-        #undef SIGNAL_EMITTER_
-    };
-
-    if (iQueuedSignals) {
-        uint i = iFirstQueuedSignal;
-        BikeSession* obj = parentObject();
-
-        // Reset first queued signal before emitting the signals.
-        // Signal handlers may emit new signals.
-        iFirstQueuedSignal = SignalCount;
-        for (; i < SignalCount && iQueuedSignals; i++) {
-            const SignalMask signalBit = (SignalMask(1) << i);
-            if (iQueuedSignals & signalBit) {
-                iQueuedSignals &= ~signalBit;
-                Q_EMIT (obj->*(emitSignal[i]))();
-            }
-        }
-    }
 }
 
 #if HARBOUR_DEBUG
