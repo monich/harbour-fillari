@@ -40,10 +40,11 @@ Page {
                 // The intention here is to fix the initial list view
                 // scroll position.
                 onHeightChanged: {
+                    var h = Math.round(height)
                     if (list.contentY === -lastHeight) {
-                        list.contentY = -height
+                        list.contentY = -h
                     }
-                    lastHeight = height
+                    lastHeight = h
                 }
 
                 PageHeader {
