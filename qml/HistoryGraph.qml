@@ -64,6 +64,17 @@ Item {
             running: busy
         }
 
+        Label {
+            //: Graph placeholder
+            //% "You have no rides"
+            text: qsTrId("fillari-graph-placeholder")
+            color: Theme.secondaryColor
+            anchors.centerIn: busyIndicator
+            opacity: (busy || model.total) ? 0 : 1
+            visible: opacity > 0
+            Behavior on opacity { FadeAnimation { } }
+        }
+
         Repeater {
             id: grid
 

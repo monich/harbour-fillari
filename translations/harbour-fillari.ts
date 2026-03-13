@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1">
+<TS version="2.1" language="en">
 <context>
     <name></name>
     <message id="fillari-login_error-message">
@@ -52,6 +52,11 @@
         <source>Per month</source>
         <extracomment>Graph header</extracomment>
         <translation>Per month</translation>
+    </message>
+    <message id="fillari-graph-placeholder">
+        <source>You have no rides</source>
+        <extracomment>Graph placeholder</extracomment>
+        <translation>You have no rides</translation>
     </message>
     <message id="fillari-history-header">
         <source>Ride history</source>
