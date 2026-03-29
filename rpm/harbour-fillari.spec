@@ -1,7 +1,7 @@
 Name:           harbour-fillari
 
 Summary:        Helsinki city bike app
-Version:        1.0.9
+Version:        1.0.10
 Release:        1
 License:        BSD
 URL:            https://github.com/monich/harbour-fillari
@@ -21,6 +21,7 @@ BuildRequires:  qt5-qttools-linguist
 
 %{!?qtc_qmake5:%define qtc_qmake5 %qmake5}
 %{!?qtc_make:%define qtc_make make}
+%define _binary_payload w6.xzdio
 
 %description
 Helsinki city bike app
