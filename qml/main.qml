@@ -5,7 +5,7 @@ import harbour.fillari 1.0
 ApplicationWindow {
     id: appWindow
 
-    allowedOrientations: Orientation.All
+    allowedOrientations: Orientation.Portrait | Orientation.LandscapeMask
 
     initialPage: Component {
         MainPage {
