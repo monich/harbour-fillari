@@ -31,7 +31,11 @@ Page {
             opacity: (session.sessionState === BikeSession.LoginCheck ||
                       session.sessionState === BikeSession.LoggingIn ||
                       session.sessionState === BikeSession.LoggingOut) ? 1 : 0
-            sourceComponent: Component { WaitView { } }
+            sourceComponent: Component {
+                WaitView {
+                    isLandscape: thisPage.isLandscape
+                }
+            }
             Behavior on opacity { FadeAnimation { } }
         }
 
