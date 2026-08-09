@@ -4,7 +4,6 @@ import Sailfish.Silica 1.0
 Item {
     id: thisView
 
-    property bool isLandscape
     property alias text: label.text
 
     Label {
@@ -25,9 +24,7 @@ Item {
     BusyIndicator {
         id: busyIndicator
 
-        // Always center on screen (not on the page)
-        y: Math.round(((isLandscape ? Screen.width : Screen.height) - height) / 2)
-        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.centerIn: parent
         size: BusyIndicatorSize.Large
         running: true
     }

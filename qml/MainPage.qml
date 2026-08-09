@@ -26,16 +26,13 @@ Page {
         contentHeight: height
 
         Loader {
-            anchors.fill: parent
+            width: parent.width
+            height: thisPage.isLandscape ? Screen.width : Screen.height
             active: opacity > 0
             opacity: (session.sessionState === BikeSession.LoginCheck ||
                       session.sessionState === BikeSession.LoggingIn ||
                       session.sessionState === BikeSession.LoggingOut) ? 1 : 0
-            sourceComponent: Component {
-                WaitView {
-                    isLandscape: thisPage.isLandscape
-                }
-            }
+            sourceComponent: Component { WaitView { } }
             Behavior on opacity { FadeAnimation { } }
         }
 
