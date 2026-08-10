@@ -84,7 +84,7 @@ Page {
                     id: graph
 
                     // Make it fit nicely into the screen in landscape
-                    readonly property int maxHeight: thisPage.height - header.height - yearSelector.height - 2 * headerColumn .spacing - Theme.paddingLarge
+                    readonly property int maxHeight: thisPage.height - header.height - yearSelector.contentItem.height - 2 * headerColumn .spacing - Theme.paddingLarge
 
                     x: Theme.horizontalPageMargin
                     width: parent.width - 2 * x
