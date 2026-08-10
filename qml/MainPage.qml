@@ -7,71 +7,22 @@ Page {
 
     property var session
 
-    Connections {
-        target: session
-        onSessionStateChanged: {
-            if (session.sessionState === BikeSession.Unauthorized) {
-                pageStack.pop(thisPage, PageStackAction.Immediate)
-            }
-        }
-        onHttpErrorChanged: {
-            if (session.httpError) {
-                httpErrorPanel.opacity = 1
-            }
-        }
-    }
-
     SilicaFlickable {
         anchors.fill: parent
         contentHeight: height
 
         Loader {
-            width: parent.width
-            height: thisPage.isLandscape ? Screen.width : Screen.height
-            active: opacity > 0
-            opacity: (session.sessionState === BikeSession.LoginCheck ||
-                      session.sessionState === BikeSession.LoggingIn ||
-                      session.sessionState === BikeSession.LoggingOut) ? 1 : 0
-            sourceComponent: Component { WaitView { } }
-            Behavior on opacity { FadeAnimation { } }
-        }
+            id: mainViewLoader
 
-        Loader {
+            readonly property bool _active: session.sessionState === BikeSession.UserInfoQuery ||
+                                            session.sessionState === BikeSession.HistoryQuery ||
+                                            session.sessionState === BikeSession.Ready ||
+                                            session.sessionState === BikeSession.NetworkError ||
+                                            session.sessionState === BikeSession.LoggingOut
+
             anchors.fill: parent
             active: opacity > 0
-            opacity: (session.sessionState === BikeSession.LoginNetworkError) ? 1 : 0
-            sourceComponent: Component {
-                LoginNetworkErrorView {
-                    isLandscape: thisPage.isLandscape
-                    onRetry: session.restart()
-                }
-            }
-            Behavior on opacity { FadeAnimation { } }
-        }
-
-        Loader {
-            anchors.fill: parent
-            active: opacity > 0
-            opacity: (session.sessionState === BikeSession.Unauthorized ||
-                      session.sessionState === BikeSession.LoginFailed) ? 1 : 0
-            sourceComponent: Component {
-                LoginView {
-                    isLandscape: thisPage.isLandscape
-                    error: session.httpError
-                    login: session.login
-                    onSignIn: session.signIn(login, password)
-                }
-            }
-            Behavior on opacity { FadeAnimation { } }
-        }
-
-        Loader {
-            anchors.fill: parent
-            active: opacity > 0
-            opacity: (session.sessionState === BikeSession.UserInfoQuery ||
-                      session.sessionState === BikeSession.HistoryQuery ||
-                      session.sessionState === BikeSession.Ready ||
-                      session.sessionState === BikeSession.NetworkError) ? 1 : 0
+            opacity: _active ? 1 : 0
             sourceComponent: Component {
                 MainView {
                     isLandscape: thisPage.isLandscape
@@ -79,6 +30,15 @@ Page {
                     session: thisPage.session
                 }
             }
+            Behavior on opacity { FadeAnimation { } }
+        }
+
+        Loader {
+            width: parent.width
+            height: thisPage.isLandscape ? Screen.width : Screen.height
+            active: opacity > 0
+            opacity: mainViewLoader._active ? 0 : 1
+            sourceComponent: Component { WaitView { } }
             Behavior on opacity { FadeAnimation { } }
         }
     }
@@ -90,9 +50,14 @@ Page {
 
         error: session.httpError
         visible: opacity > 0
-        opacity: session.httpError && (session.sessionState === BikeSession.NetworkError ||
-                                       session.sessionState === BikeSession.LoginNetworkError) ? 1 : 0
+        opacity: 0
+
         onClicked: opacity = 0
+        onErrorChanged: {
+            if (error) {
+                opacity = 1
+            }
+        }
         Behavior on opacity { FadeAnimation { } }
     }
 }

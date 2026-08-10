@@ -152,6 +152,7 @@ public:
     void refreshHistory();
     void updated();
 
+    void clearCookies();
     void saveCookies(CookieJar*) const;
     void saveCookies() const;
     QNetworkCookieJar* loadCookies();
@@ -497,6 +498,18 @@ BikeSession::Private::logOut()
 }
 
 void
+BikeSession::Private::clearCookies()
+{
+    if (!iDataDir.isEmpty()) {
+        QDir dir(iDataDir);
+
+        if (dir.remove(COOKIES_FILE)) {
+            HDEBUG("Removed" << qPrintable(dir.filePath(COOKIES_FILE)));
+        }
+    }
+}
+
+void
 BikeSession::Private::saveCookies() const
 {
     saveCookies(qobject_cast<CookieJar*>(iNetworkAccessManager.cookieJar()));
@@ -795,11 +808,12 @@ BikeSession::Private::onUserQueryFinished(
 {
     bool authenticated = aUserInfo.value(QStringLiteral("authenticated")).toBool();
 
-    saveCookies();
     HDEBUG("authenticated:" << authenticated);
     if (authenticated) {
+        saveCookies();
         userInfoReceived(aUserInfo);
     } else {
+        clearCookies();
         iRequest.reset();
         setFirstName(QString());
         setLastName(QString());
@@ -857,13 +871,7 @@ BikeSession::Private::onLogoutDone()
     iRequest.reset();
     iNetworkAccessManager.setCookieJar(new CookieJar(&iNetworkAccessManager));
 
-    if (!iDataDir.isEmpty()) {
-        QDir dir(iDataDir);
-
-        if (dir.remove(COOKIES_FILE)) {
-            HDEBUG("Removed" << qPrintable(dir.filePath(COOKIES_FILE)));
-        }
-    }
+    clearCookies();
 
     if (!iHistory.isEmpty()) {
         iHistory = QJsonArray();

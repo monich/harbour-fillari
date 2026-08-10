@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Slava Monich <slava@monich.com>
+ * Copyright (C) 2025-2026 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -40,7 +40,6 @@
 #define BIKE_USER_H
 
 #include <QtCore/QObject>
-#include <QtCore/QString>
 
 class BikeUser :
     public QObject
@@ -57,6 +56,7 @@ public:
     void setUserId(QString);
 
     QString dataDir() const;
+    Q_INVOKABLE bool hasFile(QString);
 
 Q_SIGNALS:
     void userIdChanged();

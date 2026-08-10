@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Slava Monich <slava@monich.com>
+ * Copyright (C) 2025-2026 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -52,12 +52,20 @@
 class BikeUser::Private
 {
 public:
+    Private();
+
     bool setUserName(const QString&);
 
 public:
     QString iUserName;
-    QString iDataDir;
+    QDir iConfigDir;
+    QDir iDataDir;
 };
+
+BikeUser::Private::Private() :
+    iConfigDir(QDir(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation)).
+        filePath(BIKE_CONF_DIR))
+{}
 
 bool
 BikeUser::Private::setUserName(
@@ -67,15 +75,14 @@ BikeUser::Private::setUserName(
         HDEBUG(aUserName);
         if (aUserName.isEmpty()) {
             iUserName.clear();
-            iDataDir.clear();
+            iDataDir = QDir();
             return true;
         } else {
-            QDir dir(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation).
-                append(QDir::separator()).append(BIKE_CONF_DIR).
-                append(QDir::separator()).append(aUserName));
+            QDir dir(iConfigDir.filePath(aUserName));
+
             if (dir.mkpath(".")) {
                 iUserName = aUserName;
-                iDataDir = dir.absolutePath();
+                iDataDir = dir;
                 return true;
             }
             HWARN("Failed to create" << dir.path());
@@ -118,5 +125,14 @@ BikeUser::setUserId(
 QString
 BikeUser::dataDir() const
 {
-    return iPrivate->iDataDir;
+    return iPrivate->iDataDir.absolutePath();
+}
+
+bool
+BikeUser::hasFile(
+    QString aFile)
+{
+    QFileInfo file(iPrivate->iDataDir, aFile);
+    HDEBUG(qPrintable(file.absoluteFilePath()) << (file.isFile() ? "exists" : "doesn't exist"));
+    return file.isFile();
 }

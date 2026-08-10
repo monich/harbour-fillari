@@ -83,6 +83,11 @@
         <extracomment>Login form button</extracomment>
         <translation>Kirjaudu</translation>
     </message>
+    <message id="fillari-login-failed">
+        <source>Login failed!</source>
+        <extracomment>Default login error message</extracomment>
+        <translation>Sisäänkirjautuminen epäonnistui!</translation>
+    </message>
     <message id="fillari-main-status-loading_user_info">
         <source>Loading account information...</source>
         <extracomment>Main page status text</extracomment>

@@ -16,7 +16,6 @@ Item {
     readonly property bool _busy: session.sessionState === BikeSession.UserInfoQuery ||
                                   session.sessionState === BikeSession.HistoryQuery
 
-
     BikeHistoryStats {
         id: stats
 
