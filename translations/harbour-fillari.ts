@@ -86,7 +86,7 @@
     <message id="fillari-login-failed">
         <source>Login failed!</source>
         <extracomment>Default login error message</extracomment>
-        <translation><Login failed!</translation>
+        <translation>Login failed!</translation>
     </message>
     <message id="fillari-main-status-loading_user_info">
         <source>Loading account information...</source>
