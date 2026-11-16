@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Slava Monich <slava@monich.com>
+ * Copyright (C) 2025-2026 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -44,7 +44,7 @@
 #define BIKE_CONF_DIR   "harbour/fillari/"
 #define BIKE_DCONF_ROOT "/apps/" BIKE_APP_NAME "/"
 
-#define BIKE_DEFAULT_REFERER "https://www.hsl.fi/omat-tiedot/kaupunkipyorat?fromLogin=true"
-#define BIKE_API_URL(x) "https://www.hsl.fi/user/api/v1/" x
+#define BIKE_DEFAULT_REFERER "https://www.hsl.fi/en/my-information/citybikes"
+#define BIKE_API_URL(x) "https://www.hsl.fi/api/user/" x
 
 #endif // BIKE_APP_H

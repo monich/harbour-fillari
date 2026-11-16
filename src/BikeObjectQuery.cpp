@@ -118,7 +118,7 @@ BikeObjectQuery::onQueryFinished()
 // ==========================================================================
 
 const QString BikeUserQuery::URL
-    (BIKE_API_URL("menu?language=en&path=/omat-tiedot/kaupunkipyorat/matkahistoria"));
+    (BIKE_API_URL("legacy-profile?language=en&path=/en/my-information/citybikes"));
 
 BikeUserQuery::BikeUserQuery(
     BikeRequest* aParent) :
@@ -134,7 +134,7 @@ BikeUserQuery::BikeUserQuery(
 // BikeServiceQuery
 // ==========================================================================
 
-const QString BikeServiceQuery::URL(BIKE_API_URL("citybikes/cbf/maas-user"));
+const QString BikeServiceQuery::URL(BIKE_API_URL("city-bikes/account"));
 
 BikeServiceQuery::BikeServiceQuery(
     QNetworkAccessManager* aParent) :

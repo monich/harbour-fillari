@@ -56,13 +56,13 @@ public:
 };
 
 const QString
-BikeRequest::Private::USER_AGENT("Mozilla/5.0 (X11; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0");
+BikeRequest::Private::USER_AGENT("Mozilla/5.0 (X11; Linux x86_64; rv:160.0) Gecko/20100101 Firefox/160.0");
 const QList<QNetworkReply::RawHeaderPair>
-BikeRequest::Private::DEFAULT_HEADERS(
-    QList<QNetworkReply::RawHeaderPair>() <<
-    QNetworkReply::RawHeaderPair("DNT", "1") <<
-    QNetworkReply::RawHeaderPair("Sec-GPC", "1") <<
-    QNetworkReply::RawHeaderPair("Connection", "keep-alive"));
+BikeRequest::Private::DEFAULT_HEADERS(QList<QNetworkReply::RawHeaderPair>() <<
+    QNetworkReply::RawHeaderPair("Pragma", "no-cache") <<
+    QNetworkReply::RawHeaderPair("Cache-Control", "no-cache") <<
+    QNetworkReply::RawHeaderPair("Connection", "keep-alive") <<
+    QNetworkReply::RawHeaderPair("Sec-GPC", "1"));
 
 // ==========================================================================
 // BikeRequest::Reply
@@ -160,10 +160,9 @@ BikeRequest::post(
     QNetworkRequest req(createRequest(aUrl, aHeaders));
 
     req.setHeader(QNetworkRequest::ContentTypeHeader, aContentType);
-    HDEBUG("============ POST================");
+    HDEBUG("============ POST ===============");
     HDEBUG(qPrintable(toString(req)));
-    HDEBUG("Data:");
-    HDEBUG(aPostData.constData());
+    HDEBUG("Data:" << aPostData.constData());
 
     return getNetworkAccessManager()->post(req, aPostData);
 }

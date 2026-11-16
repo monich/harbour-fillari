@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Slava Monich <slava@monich.com>
+ * Copyright (C) 2025-2026 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -50,7 +50,7 @@ BikeHistoryQuery::BikeHistoryQuery(
     QNetworkAccessManager* aParent) :
     BikeRequest(aParent)
 {
-    connect(get(BIKE_API_URL("citybikes/rentals"), jsonApiHeaders()),
+    connect(get(BIKE_API_URL("city-bikes/rentals"), jsonApiHeaders()),
         SIGNAL(finished()), SLOT(onQueryFinished()));
 }
 

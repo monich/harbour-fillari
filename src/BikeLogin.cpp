@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Slava Monich <slava@monich.com>
+ * Copyright (C) 2025-2026 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -37,6 +37,8 @@
  */
 
 #include "BikeLogin.h"
+
+#include "BikeApp.h"
 #include "BikeObjectQuery.h"
 
 #include <QtCore/QJsonArray>
@@ -44,6 +46,9 @@
 #include <QtCore/QJsonObject>
 
 #include "HarbourDebug.h"
+
+#define DEFAULT_VAADIN_VERSION "8.31.1"
+#define DEFAULT_VAADIN_APP_ID "ROOT-2521314"
 
 // ==========================================================================
 // BikeLogin::Private
@@ -107,6 +112,7 @@ BikeLogin::Private::Private(
     QObject(aParent),
     iLogin(aLogin),
     iPassword(aPassword),
+    iWsver(DEFAULT_VAADIN_VERSION),
     iSyncId(0),
     iClientId(0)
 {}
@@ -156,7 +162,6 @@ BikeLogin::Private::onGetLoginFinished()
             HeaderPair("Sec-Fetch-Dest", "document") <<
             HeaderPair("Sec-Fetch-Mode", "navigate") <<
             HeaderPair("Sec-Fetch-Site", "same-site") <<
-            HeaderPair("Sec-Fetch-User", "?1") <<
             HeaderPair("Priority", "u=0, i") <<
             HeaderPair("Upgrade-Insecure-Requests", "1")), SIGNAL(finished()), SLOT(onGetAuthFinished()));
     } else {
@@ -181,7 +186,6 @@ BikeLogin::Private::onGetAuthFinished()
             HeaderPair("Sec-Fetch-Dest", "document") <<
             HeaderPair("Sec-Fetch-Mode", "navigate") <<
             HeaderPair("Sec-Fetch-Site", "same-site") <<
-            HeaderPair("Sec-Fetch-User", "?1") <<
             HeaderPair("Priority", "u=0, i") <<
             HeaderPair("TE", "trailers") <<
             HeaderPair("Upgrade-Insecure-Requests", "1")),
@@ -202,10 +206,56 @@ BikeLogin::Private::onGetAuthUiFinished()
     if (status == OK) {
         const QString curDate(QString::number(QDateTime::currentMSecsSinceEpoch()));
         const QString authUiUrl(QString("%1&v-%2").arg(iAuthUiUrl, curDate));
+        QByteArray replyData(reply->readAll());
+        HDEBUG(replyData.constData());
 
-        TODO("extract wsver and appId")
-        const QString appId("ROOT-2521314");
-        iWsver = "8.27.3";
+        // Anything we're interested in doesn't contain any spaces
+        replyData = replyData.replace(" ", "");
+
+        // Looking for something like this:
+        //
+        // vaadin.initApplication("ROOT-2521314",<arguments in JSON format>);
+        //
+        static const QByteArray prefix(".initApplication(\"");
+        QString appId(DEFAULT_VAADIN_APP_ID);
+        int start = replyData.indexOf(prefix);
+        if (start > 0) {
+            int end = replyData.indexOf('"', start += prefix.length());
+
+            if (end > start) {
+                appId = QString::fromLatin1(replyData.constData() + start,
+                    end - start);
+                HDEBUG("appId" << appId);
+
+                // Extract JSON. We expect something like this:
+                //
+                // {
+                //    "theme": "openid",
+                //    "versionInfo": {
+                //      "vaadinVersion": "8.31.1",
+                //      "atmosphereVersion": "2.4.30.vaadin9"
+                //    },
+                //    ...
+                //  }
+
+                start = replyData.indexOf(",{\"", end);
+                if (start > end) {
+                    end = replyData.indexOf("\"})", ++start);
+                    if (end > start) {
+                        // start points to {
+                        const QByteArray args(replyData.mid(start, end + 2 - start));
+                        const QJsonObject json(QJsonDocument::fromJson(args).object());
+                        const QString version(json.value("versionInfo").toObject().
+                                                   value("vaadinVersion").toString());
+
+                        if (!version.isEmpty()) {
+                            iWsver = version;
+                            HDEBUG("VAADIN version" << iWsver);
+                        }
+                    }
+                }
+            }
+        }
 
         owner->updateCookies(reply);
         connect(owner->post(authUiUrl, QList<HeaderPair>() <<
@@ -216,9 +266,11 @@ BikeLogin::Private::onGetAuthUiFinished()
             HeaderPair("Sec-Fetch-Site", "same-origin") <<
             HeaderPair("TE", "trailers"),
             "application/x-www-form-urlencoded",
-            QString("v-browserDetails=1&v-sh=1440&v-sw=2560&v-cw=1702&v-ch=679&v-vw=1702&v-vh=0"
-                "&theme=openid&v-appId=%1&v-loc=%2&v-wn=%1-1").
-                arg(appId, QString::fromLatin1(QUrl::toPercentEncoding(authUiUrl))).toUtf8()),
+            QString("v-browserDetails=1&theme=openid&v-appId=%1&"
+                "v-sh=1440&v-sw=2560&v-cw=1702&v-ch=679&v-curdate=%2&"
+                "v-vw=1702&v-vh=0&v-loc=%3&v-wn=%1-42&v-mtp=0").
+                arg(appId, QString::number(QDateTime::currentMSecsSinceEpoch()),
+                QString::fromLatin1(QUrl::toPercentEncoding(authUiUrl))).toUtf8()),
             SIGNAL(finished()), SLOT(onPostAuthUiFinished()));
     } else {
         Q_EMIT owner->httpError(status);
@@ -237,10 +289,11 @@ BikeLogin::Private::onPostAuthUiFinished()
         const QByteArray replyData(reply->readAll());
 
         // {"v-uiId":0,"uidl":"..."}
-        HDEBUG(replyData.constData());
         const QJsonObject replyJson(QJsonDocument::fromJson(replyData).object());
-        const QString uidlString(replyJson.value("uidl").toString());
-        const QJsonObject uidl(QJsonDocument::fromJson(uidlString.toUtf8()).object());
+        const QByteArray uidlValue(replyJson.value("uidl").toString().toUtf8());
+        const QJsonObject uidl(QJsonDocument::fromJson(uidlValue).object());
+        HDEBUG(replyData.constData());
+        HDEBUG(uidlValue.constData());
 
         // Parse the reply
         iSyncId = uidl.value(syncIdKey).toInt();
@@ -328,18 +381,18 @@ BikeLogin::Private::onPostAuthUiFinished()
         owner->updateCookies(reply);
         connect(owner->post(iAuthUidlUrl, iAuthUidlHeaders, JsonContentType,
             QJsonDocument(QJsonObject{
-               { "wsver", iWsver },
-               { csrfTokenKey, iCsrfToken },
-               { syncIdKey, iSyncId },
-               { clientIdKey, iClientId },
-               { rpcKey, QJsonArray{
+                { "wsver", iWsver },
+                { csrfTokenKey, iCsrfToken },
+                { syncIdKey, iSyncId },
+                { clientIdKey, iClientId },
+                { rpcKey, QJsonArray{
                     QJsonArray{
                         "0",
                         "com.vaadin.shared.ui.DelayedCallbackRpc",
                         "received",
                         QJsonArray{0}
                     }}
-               }
+                }
             }).toJson(QJsonDocument::Compact)), SIGNAL(finished()),
             SLOT(onPostDelayedCallbackRpcReceivedFinished()));
     } else {
@@ -639,6 +692,8 @@ BikeLogin::Private::onPostButtonServerRpcClickFinished()
                     if (change.size() > 1 && change.at(0).toString() == "open") {
                         connect(owner->get(change.at(1).toObject().value("src").toString(),
                             QList<HeaderPair>() <<
+                            HeaderPair("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8") <<
+                            HeaderPair("Referer", iAuthUiUrl.toUtf8()) <<
                             HeaderPair("Sec-Fetch-Dest", "document") <<
                             HeaderPair("Sec-Fetch-Mode", "navigate") <<
                             HeaderPair("Sec-Fetch-Site", "same-origin") <<
@@ -714,22 +769,40 @@ BikeLogin::Private::onGetAuthRedirectFinished()
     HDEBUG(qPrintable(toString(reply)));
     if (status == OK) {
         const QString redirectHtml(reply->readAll());
-        const int start = redirectHtml.indexOf("https://www.hsl.fi/user/auth/hslid?");
+
+        //
+        // Looking for the piece of JS looking like this:
+        //
+        // if (openInTopWindow) {
+        //     window.top.location.replace('https://www.hsl.fi/user/auth/hslid?....');
+        // } else {
+        //     window.location.replace('https://www.hsl.fi/user/auth/hslid?....');
+        // }
+        //
+        // Both URLs are the same, so it doesn't matter which one we find.
+        //
+        static const QString urlPrefix(".location.replace(");
+        static const QChar urlDelimiter('\'');
+        static const QString searchString(urlPrefix + urlDelimiter + "https://www.hsl.fi/user/auth/hslid?");
+        int start = redirectHtml.indexOf(searchString);
 
         owner->updateCookies(reply);
         HDEBUG(qPrintable(redirectHtml));
         if (start > 0) {
-            const QChar delimiter(redirectHtml.at(start - 1));
-            const int end = redirectHtml.indexOf(delimiter, start);
-            if (end > 0) {
+            // Skip the URL prefix + delimiter and find the end of the URL
+            int end = redirectHtml.indexOf(urlDelimiter, start += (urlPrefix.length() + 1));
+            if (end > start) {
+                const QString postLoginPageUrl(redirectHtml.mid(start, end - start));
+
                 // The response to this request will send us the hslid= cookie
                 // that we have been looking for
-                connect(owner->get(redirectHtml.mid(start, end - start),
+                connect(parentObject()->get(postLoginPageUrl,
                     QList<HeaderPair>() <<
+                    HeaderPair("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8") <<
+                    HeaderPair("Referer", "https://id.hsl.fi/") <<
                     HeaderPair("Sec-Fetch-Dest", "document") <<
                     HeaderPair("Sec-Fetch-Mode", "navigate") <<
-                    HeaderPair("Sec-Fetch-Site", "same-origin") <<
-                    HeaderPair("Sec-Fetch-User", "?1") <<
+                    HeaderPair("Sec-Fetch-Site", "same-site") <<
                     HeaderPair("Priority", "u=0, i") <<
                     HeaderPair("TE", "trailers") <<
                     HeaderPair("Upgrade-Insecure-Requests", "1")),
@@ -750,8 +823,8 @@ BikeLogin::Private::onGetHslidFinished()
     const int status = statusCode(reply);
 
     // Normally we get 302 (Found) here which redirects us to
-    // https://www.hsl.fi//omat-tiedot/kaupunkipyorat/matkahistoria?fromLogin=true
-    // but we don't follow the regirect
+    // https://www.hsl.fi/en/my-information/citybikes
+    // but we don't follow the redirect
     HDEBUG(qPrintable(toString(reply)));
     if (status == OK || status == Found) {
         owner->updateCookies(reply);
@@ -777,12 +850,12 @@ BikeLogin::BikeLogin(
     BikeRequest(aParent),
     iPrivate(new Private(this, aLogin, aPassword))
 {
-    QNetworkReply* reply = get("https://www.hsl.fi/user/auth/login?language=en",  QList<HeaderPair>() <<
-        HeaderPair("Referer", "https://www.hsl.fi/omat-tiedot/kaupunkipyorat/matkahistoria") <<
+    QNetworkReply* reply = get("https://www.hsl.fi/user/auth/login?language=en&returnUri=/en/my-information/citybikes",
+        QList<HeaderPair>() <<
+        HeaderPair("Referer", BIKE_DEFAULT_REFERER) <<
         HeaderPair("Sec-Fetch-Dest", "document") <<
         HeaderPair("Sec-Fetch-Mode", "navigate") <<
         HeaderPair("Sec-Fetch-Site", "same-origin") <<
-        HeaderPair("Sec-Fetch-User", "?1") <<
         HeaderPair("Priority", "u=0, i") <<
         HeaderPair("TE", "trailers") <<
         HeaderPair("Upgrade-Insecure-Requests", "1"));
